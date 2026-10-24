@@ -1,0 +1,196 @@
+---
+import { dictionary, type Lang } from '../i18n/index.ts'
+import { repo, version } from '../lib/installer.ts'
+import InstallCommand from './InstallCommand.astro'
+import InstallReplay from './InstallReplay.astro'
+import DemoTour from './DemoTour.astro'
+
+const { lang } = Astro.props as { lang: Lang }
+const t = dictionary(lang)
+---
+
+<!-- The command first: most people come to install it. -->
+<section class="relative overflow-hidden">
+  <div class="hero-grid pointer-events-none absolute inset-0 -z-10"></div>
+  <div class="mx-auto flex max-w-6xl flex-col items-center px-4 pt-14 pb-16 text-center sm:px-6 sm:pt-20">
+    <a
+      href={`https://github.com/${repo}/releases/tag/${version}`}
+      class="reveal mb-6 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+    >
+      <span class="size-1.5 rounded-full bg-emerald-500"></span>
+      ColTex {version}
+      <span aria-hidden="true">→</span>
+    </a>
+    <h1 class="reveal max-w-3xl text-4xl font-semibold tracking-tight text-balance sm:text-5xl" style="--i: 1">{t.hero.tagline}</h1>
+    <p class="reveal mt-5 flex flex-wrap justify-center gap-x-2.5 gap-y-1 text-sm text-muted-foreground sm:text-base" style="--i: 2">
+      {t.hero.points.map((p, i) => (i ? [<span aria-hidden="true">·</span>, <span>{p}</span>] : <span>{p}</span>))}
+    </p>
+    <div class="reveal mt-9 flex w-full justify-center" style="--i: 3"><InstallCommand lang={lang} /></div>
+  </div>
+  <!-- ColTex itself is what the page is about: its own interface, playing a tour. -->
+  <div class="reveal mx-auto max-w-6xl px-4 pb-20 sm:px-6" style="--i: 4"><DemoTour lang={lang} /></div>
+</section>
+
+<section id="why" class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+  <h2 class="reveal text-3xl font-semibold tracking-tight">{t.why.title}</h2>
+  <p class="reveal mt-4 max-w-3xl text-muted-foreground" style="--i: 1">{t.why.lead}</p>
+  <div class="mt-10 grid gap-4 sm:grid-cols-2">
+    {
+      t.why.items.map((item, i) => (
+        <div class="reveal rounded-xl border border-border bg-card p-6 transition-transform duration-300 hover:-translate-y-0.5" style={`--i: ${i}`}>
+          <h3 class="font-semibold">{item.title}</h3>
+          <p class="mt-2 text-sm leading-relaxed text-muted-foreground">{item.text}</p>
+        </div>
+      ))
+    }
+  </div>
+</section>
+
+<section id="features" class="border-y border-border bg-muted/40">
+  <div class="mx-auto max-w-6xl px-4 py-20 sm:px-6">
+    <h2 class="reveal text-3xl font-semibold tracking-tight">{t.features.title}</h2>
+    <div class="mt-10 grid gap-x-10 gap-y-12 md:grid-cols-2">
+      {
+        t.features.groups.map((group, i) => (
+          <div class="reveal" style={`--i: ${i % 2}`}>
+            <h3 class="font-semibold">{group.title}</h3>
+            <ul class="mt-4 space-y-3 text-sm leading-relaxed text-muted-foreground">
+              {group.items.map(item => (
+                <li class="flex gap-3">
+                  <span class="mt-2 size-1.5 shrink-0 rounded-full bg-primary" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))
+      }
+    </div>
+  </div>
+</section>
+
+<!-- One column: the command, the three steps side by side, then the replay at full width. -->
+<section id="install" class="mx-auto max-w-4xl px-4 py-20 sm:px-6">
+  <h2 class="reveal text-center text-3xl font-semibold tracking-tight">{t.install.title}</h2>
+  <ol class="mt-10 grid gap-4 sm:grid-cols-3">
+    {
+      t.install.steps.map((step, i) => (
+        <li class="reveal rounded-xl border border-border bg-card p-5" style={`--i: ${i}`}>
+          <span class="flex size-7 items-center justify-center rounded-full bg-primary text-sm font-medium text-primary-foreground">{i + 1}</span>
+          <p class="mt-3 text-sm leading-relaxed text-muted-foreground">{step}</p>
+        </li>
+      ))
+    }
+  </ol>
+  <p class="reveal mt-4 text-center text-xs text-muted-foreground" style="--i: 3">{t.install.recommended}</p>
+  <div class="reveal mt-10" style="--i: 1"><InstallReplay lang={lang} /></div>
+
+  <h3 class="reveal mt-20 text-xl font-semibold tracking-tight">{t.editions.title}</h3>
+  <p class="reveal mt-3 max-w-3xl text-sm text-muted-foreground" style="--i: 1">{t.editions.lead}</p>
+  <div class="reveal mt-6 overflow-x-auto rounded-xl border border-border bg-card" style="--i: 2">
+    <table class="w-full text-left text-sm">
+      <thead class="border-b border-border text-muted-foreground">
+        <tr>{t.editions.head.map(h => <th class="px-5 py-3 font-medium whitespace-nowrap">{h}</th>)}</tr>
+      </thead>
+      <tbody>
+        {
+          t.editions.rows.map(row => (
+            <tr class="border-b border-border last:border-0">
+              {row.map((cell, i) => (
+                <td class:list={['px-5 py-3 whitespace-nowrap', i === 0 && 'font-medium']}>{cell}</td>
+              ))}
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- The questions, one category at a time: the categories are tabs under the heading. -->
+<section id="faq" class="mx-auto max-w-3xl px-4 pt-4 pb-24 sm:px-6">
+  <h2 class="reveal text-center text-3xl font-semibold tracking-tight">{t.faq.title}</h2>
+  <div class="faq-tabs reveal mt-8 flex flex-wrap justify-center gap-2" role="tablist" style="--i: 1">
+    {
+      t.faq.categories.map((category, c) => (
+        <button
+          type="button"
+          role="tab"
+          id={`faq-tab-${c}`}
+          aria-controls={`faq-${c}`}
+          aria-selected={c === 0 ? 'true' : 'false'}
+          class="faq-tab rounded-full border border-border px-4 py-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
+        >
+          {category.title}
+        </button>
+      ))
+    }
+  </div>
+  {
+    t.faq.categories.map((category, c) => (
+      <div id={`faq-${c}`} role="tabpanel" aria-labelledby={`faq-tab-${c}`} class="faq-panel mt-8 divide-y divide-border border-y border-border" hidden={c !== 0}>
+        {category.items.map(item => (
+          <details class="faq group">
+            <summary class="flex cursor-pointer list-none items-center justify-between gap-4 py-4 font-medium">
+              {item.q}
+              <svg viewBox="0 0 24 24" class="size-4 shrink-0 text-muted-foreground transition-transform duration-200 group-open:rotate-45" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+            </summary>
+            <p class="pb-5 text-sm leading-relaxed text-muted-foreground">{item.a}</p>
+          </details>
+        ))}
+      </div>
+    ))
+  }
+</section>
+
+<script>
+  // The FAQ's categories: one panel shown at a time, the questions appearing in turn.
+  const tabs = [...document.querySelectorAll<HTMLButtonElement>('.faq-tab')]
+  const panels = [...document.querySelectorAll<HTMLElement>('.faq-panel')]
+  tabs.forEach((tab, i) =>
+    tab.addEventListener('click', () => {
+      tabs.forEach((t, j) => t.setAttribute('aria-selected', String(i === j)))
+      panels.forEach((p, j) => {
+        p.hidden = i !== j
+        if (i === j) p.querySelectorAll<HTMLElement>('.faq').forEach((q, k) => q.animate([{ opacity: 0, transform: 'translateY(6px)' }, { opacity: 1, transform: 'none' }], { duration: 250, delay: k * 40, easing: 'ease-out', fill: 'backwards' }))
+      })
+    }),
+  )
+</script>
+
+<style>
+  /* A faint grid behind the top of the page, fading out downwards. */
+  .hero-grid {
+    background-image:
+      linear-gradient(to right, var(--border) 1px, transparent 1px),
+      linear-gradient(to bottom, var(--border) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: radial-gradient(ellipse 70% 55% at 50% 0%, #000 30%, transparent 75%);
+  }
+  .faq-tab[aria-selected='true'] {
+    border-color: var(--primary);
+    background: var(--primary);
+    color: var(--primary-foreground);
+  }
+  /* FAQ answers open smoothly where the browser can animate to auto height. */
+  .faq::details-content {
+    block-size: 0;
+    overflow: hidden;
+    transition:
+      block-size 0.25s ease,
+      content-visibility 0.25s allow-discrete;
+  }
+  .faq[open]::details-content {
+    block-size: auto;
+  }
+  :global(:root) {
+    interpolate-size: allow-keywords;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .faq::details-content {
+      transition: none;
+    }
+  }
+</style>

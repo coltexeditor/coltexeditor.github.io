@@ -1,0 +1,514 @@
+[
+ {
+  "id": "amazon-bedrock",
+  "name": "Amazon Bedrock",
+  "apiKey": "AWS credentials or bearer token",
+  "oauth": null,
+  "modelCount": 193,
+  "models": []
+ },
+ {
+  "id": "ant-ling",
+  "name": "Ant Ling",
+  "apiKey": "Ant Ling API key",
+  "oauth": null,
+  "modelCount": 3,
+  "models": []
+ },
+ {
+  "id": "anthropic",
+  "name": "Anthropic",
+  "apiKey": "Anthropic API key",
+  "oauth": {
+   "name": "Anthropic (Claude Pro/Max)",
+   "subscription": true
+  },
+  "modelCount": 17,
+  "models": []
+ },
+ {
+  "id": "azure",
+  "name": "Azure",
+  "apiKey": "Azure OpenAI API key",
+  "oauth": null,
+  "modelCount": 45,
+  "models": []
+ },
+ {
+  "id": "baseten",
+  "name": "Baseten",
+  "apiKey": "Baseten API key",
+  "oauth": null,
+  "modelCount": 22,
+  "models": []
+ },
+ {
+  "id": "cerebras",
+  "name": "Cerebras",
+  "apiKey": "Cerebras API key",
+  "oauth": null,
+  "modelCount": 2,
+  "models": []
+ },
+ {
+  "id": "cloudflare-ai-gateway",
+  "name": "Cloudflare AI Gateway",
+  "apiKey": "Cloudflare API key",
+  "oauth": null,
+  "modelCount": 57,
+  "models": []
+ },
+ {
+  "id": "cloudflare-workers-ai",
+  "name": "Cloudflare Workers AI",
+  "apiKey": "Cloudflare API key",
+  "oauth": null,
+  "modelCount": 18,
+  "models": []
+ },
+ {
+  "id": "deepseek",
+  "name": "DeepSeek",
+  "apiKey": "DeepSeek API key",
+  "oauth": null,
+  "modelCount": 2,
+  "models": [
+   {
+    "id": "deepseek-flash",
+    "name": "DeepSeek V4.1 Flash",
+    "contextWindow": 1000000,
+    "reasoning": true,
+    "thinkingLevels": [
+     "off",
+     "low",
+     "high",
+     "max"
+    ]
+   },
+   {
+    "id": "deepseek-v4-pro",
+    "name": "DeepSeek V4 Pro",
+    "contextWindow": 1000000,
+    "reasoning": true,
+    "thinkingLevels": [
+     "off",
+     "high",
+     "max"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "fireworks",
+  "name": "Fireworks",
+  "apiKey": "Fireworks API key",
+  "oauth": null,
+  "modelCount": 22,
+  "models": []
+ },
+ {
+  "id": "github-copilot",
+  "name": "GitHub Copilot",
+  "apiKey": "GitHub Copilot token",
+  "oauth": {
+   "name": "GitHub Copilot",
+   "subscription": true
+  },
+  "modelCount": 35,
+  "models": []
+ },
+ {
+  "id": "google",
+  "name": "Google",
+  "apiKey": "Gemini API key",
+  "oauth": null,
+  "modelCount": 22,
+  "models": []
+ },
+ {
+  "id": "google-vertex",
+  "name": "Google Vertex AI",
+  "apiKey": "Google Cloud credentials",
+  "oauth": null,
+  "modelCount": 13,
+  "models": []
+ },
+ {
+  "id": "groq",
+  "name": "Groq",
+  "apiKey": "Groq API key",
+  "oauth": null,
+  "modelCount": 7,
+  "models": []
+ },
+ {
+  "id": "huggingface",
+  "name": "Hugging Face",
+  "apiKey": "Hugging Face token",
+  "oauth": null,
+  "modelCount": 78,
+  "models": []
+ },
+ {
+  "id": "kimi-coding",
+  "name": "Kimi For Coding",
+  "apiKey": "Kimi API key",
+  "oauth": {
+   "name": "Kimi Code (subscription)",
+   "subscription": true
+  },
+  "modelCount": 4,
+  "models": []
+ },
+ {
+  "id": "meta",
+  "name": "Meta",
+  "apiKey": "Meta Model API key",
+  "oauth": {
+   "name": "Meta (Muse subscription)",
+   "subscription": true
+  },
+  "modelCount": 6,
+  "models": []
+ },
+ {
+  "id": "minimax",
+  "name": "MiniMax",
+  "apiKey": "MiniMax API key",
+  "oauth": null,
+  "modelCount": 3,
+  "models": []
+ },
+ {
+  "id": "minimax-cn",
+  "name": "MiniMax CN",
+  "apiKey": "MiniMax CN API key",
+  "oauth": null,
+  "modelCount": 3,
+  "models": []
+ },
+ {
+  "id": "mistral",
+  "name": "Mistral",
+  "apiKey": "Mistral API key",
+  "oauth": null,
+  "modelCount": 40,
+  "models": []
+ },
+ {
+  "id": "moonshotai",
+  "name": "Moonshot AI",
+  "apiKey": "Moonshot AI API key",
+  "oauth": null,
+  "modelCount": 4,
+  "models": []
+ },
+ {
+  "id": "moonshotai-cn",
+  "name": "Moonshot AI CN",
+  "apiKey": "Moonshot AI API key",
+  "oauth": null,
+  "modelCount": 4,
+  "models": []
+ },
+ {
+  "id": "nvidia",
+  "name": "NVIDIA",
+  "apiKey": "NVIDIA API key",
+  "oauth": null,
+  "modelCount": 21,
+  "models": []
+ },
+ {
+  "id": "openai",
+  "name": "OpenAI",
+  "apiKey": "OpenAI API key",
+  "oauth": {
+   "name": "OpenAI (ChatGPT subscription)",
+   "subscription": true
+  },
+  "modelCount": 44,
+  "models": []
+ },
+ {
+  "id": "openai-codex",
+  "name": "OpenAI Codex (legacy)",
+  "apiKey": null,
+  "oauth": {
+   "name": "OpenAI (ChatGPT Plus/Pro)",
+   "subscription": true
+  },
+  "modelCount": 9,
+  "models": []
+ },
+ {
+  "id": "opencode",
+  "name": "OpenCode Zen",
+  "apiKey": "OpenCode API key",
+  "oauth": null,
+  "modelCount": 83,
+  "models": []
+ },
+ {
+  "id": "opencode-go",
+  "name": "OpenCode Go",
+  "apiKey": "OpenCode API key",
+  "oauth": null,
+  "modelCount": 31,
+  "models": []
+ },
+ {
+  "id": "openrouter",
+  "name": "OpenRouter",
+  "apiKey": "OpenRouter API key",
+  "oauth": {
+   "name": "OpenRouter OAuth",
+   "subscription": false
+  },
+  "modelCount": 393,
+  "models": [
+   {
+    "id": "anthropic/claude-opus-5.5",
+    "name": "Anthropic: Claude Opus 5.5",
+    "contextWindow": 1000000,
+    "reasoning": true,
+    "thinkingLevels": [
+     "low",
+     "medium",
+     "high",
+     "xhigh",
+     "max"
+    ]
+   },
+   {
+    "id": "anthropic/claude-sonnet-5.5",
+    "name": "Anthropic: Claude Sonnet 5.5",
+    "contextWindow": 1000000,
+    "reasoning": true,
+    "thinkingLevels": [
+     "low",
+     "medium",
+     "high",
+     "xhigh",
+     "max"
+    ]
+   },
+   {
+    "id": "openai/gpt-5.6-sol",
+    "name": "OpenAI: GPT-5.6 Sol",
+    "contextWindow": 1050000,
+    "reasoning": true,
+    "thinkingLevels": [
+     "off",
+     "low",
+     "medium",
+     "high",
+     "xhigh",
+     "max"
+    ]
+   },
+   {
+    "id": "openai/gpt-5.5",
+    "name": "OpenAI: GPT-5.5",
+    "contextWindow": 1050000,
+    "reasoning": true,
+    "thinkingLevels": [
+     "off",
+     "low",
+     "medium",
+     "high",
+     "xhigh"
+    ]
+   },
+   {
+    "id": "google/gemini-3.1-pro-preview",
+    "name": "Google: Gemini 3.1 Pro Preview",
+    "contextWindow": 1048576,
+    "reasoning": true,
+    "thinkingLevels": [
+     "low",
+     "medium",
+     "high"
+    ]
+   },
+   {
+    "id": "google/gemini-3.8-flash",
+    "name": "Google: Gemini 3.8 Flash",
+    "contextWindow": 1048576,
+    "reasoning": true,
+    "thinkingLevels": [
+     "low",
+     "medium",
+     "high"
+    ]
+   },
+   {
+    "id": "moonshotai/kimi-k3",
+    "name": "MoonshotAI: Kimi K3",
+    "contextWindow": 1048576,
+    "reasoning": true,
+    "thinkingLevels": [
+     "off",
+     "low",
+     "high",
+     "max"
+    ]
+   },
+   {
+    "id": "qwen/qwen3.8-max-prime",
+    "name": "Qwen: Qwen3.8 Max Prime",
+    "contextWindow": 1000000,
+    "reasoning": true,
+    "thinkingLevels": [
+     "minimal",
+     "low",
+     "medium",
+     "high",
+     "xhigh"
+    ]
+   },
+   {
+    "id": "z-ai/glm-5.3",
+    "name": "Z.ai: GLM 5.3",
+    "contextWindow": 1048576,
+    "reasoning": true,
+    "thinkingLevels": [
+     "low",
+     "high",
+     "max"
+    ]
+   },
+   {
+    "id": "minimax/minimax-m3",
+    "name": "MiniMax: MiniMax M3",
+    "contextWindow": 524288,
+    "reasoning": true,
+    "thinkingLevels": [
+     "off",
+     "minimal",
+     "low",
+     "medium",
+     "high"
+    ]
+   }
+  ]
+ },
+ {
+  "id": "qwen-token-plan",
+  "name": "Qwen Token Plan",
+  "apiKey": "Qwen Token Plan API key",
+  "oauth": null,
+  "modelCount": 20,
+  "models": []
+ },
+ {
+  "id": "qwen-token-plan-cn",
+  "name": "Qwen Token Plan CN",
+  "apiKey": "Qwen Token Plan CN API key",
+  "oauth": null,
+  "modelCount": 20,
+  "models": []
+ },
+ {
+  "id": "qwen-token-plan-individual",
+  "name": "Qwen Token Plan Individual",
+  "apiKey": "Qwen Token Plan Individual API key",
+  "oauth": null,
+  "modelCount": 9,
+  "models": []
+ },
+ {
+  "id": "radius",
+  "name": "Radius",
+  "apiKey": "Radius API key",
+  "oauth": {
+   "name": "Radius",
+   "subscription": false
+  },
+  "modelCount": 29,
+  "models": []
+ },
+ {
+  "id": "together",
+  "name": "Together",
+  "apiKey": "Together API key",
+  "oauth": null,
+  "modelCount": 17,
+  "models": []
+ },
+ {
+  "id": "typesafe",
+  "name": "TypeSafe",
+  "apiKey": "TypeSafe API key",
+  "oauth": null,
+  "modelCount": 0,
+  "models": []
+ },
+ {
+  "id": "vercel-ai-gateway",
+  "name": "Vercel AI Gateway",
+  "apiKey": "Vercel AI Gateway API key",
+  "oauth": null,
+  "modelCount": 245,
+  "models": []
+ },
+ {
+  "id": "xai",
+  "name": "xAI",
+  "apiKey": "xAI API key",
+  "oauth": {
+   "name": "xAI (Grok/X subscription)",
+   "subscription": true
+  },
+  "modelCount": 4,
+  "models": []
+ },
+ {
+  "id": "xiaomi",
+  "name": "Xiaomi",
+  "apiKey": "Xiaomi API key",
+  "oauth": null,
+  "modelCount": 6,
+  "models": []
+ },
+ {
+  "id": "xiaomi-token-plan-ams",
+  "name": "Xiaomi Token Plan AMS",
+  "apiKey": "Xiaomi Token Plan AMS API key",
+  "oauth": null,
+  "modelCount": 4,
+  "models": []
+ },
+ {
+  "id": "xiaomi-token-plan-cn",
+  "name": "Xiaomi Token Plan CN",
+  "apiKey": "Xiaomi Token Plan CN API key",
+  "oauth": null,
+  "modelCount": 4,
+  "models": []
+ },
+ {
+  "id": "xiaomi-token-plan-sgp",
+  "name": "Xiaomi Token Plan SGP",
+  "apiKey": "Xiaomi Token Plan SGP API key",
+  "oauth": null,
+  "modelCount": 4,
+  "models": []
+ },
+ {
+  "id": "zai",
+  "name": "Z.AI",
+  "apiKey": "Z.AI API key",
+  "oauth": null,
+  "modelCount": 7,
+  "models": []
+ },
+ {
+  "id": "zai-coding-cn",
+  "name": "Z.AI Coding CN",
+  "apiKey": "Z.AI Coding CN API key",
+  "oauth": null,
+  "modelCount": 4,
+  "models": []
+ }
+]

@@ -1,0 +1,25 @@
+{
+  "status": "failure",
+  "outputFiles": [
+    "output.pdf",
+    "output.log",
+    "output.synctex.gz",
+    "output.blg"
+  ],
+  "diagnostics": [
+    {
+      "level": "error",
+      "message": "Undefined control sequence.",
+      "file": "main.tex",
+      "line": 64,
+      "content": "l.64     Ours + templates & \\textbd\n                                   {0.66} & \\textbd{0.86} \\\\\nThe control sequence at the end of the top line\nof your error message was never \\def'ed. If you have\nmisspelled it (e.g., `\\hobx'), type `I' and the correct\nspelling (e.g., `I\\hbox'). Otherwise just continue,\nand I'll forget about whatever was undefined.\n\n./main.tex:64: Undefined control sequence.\nl.64 ...Ours + templates & \\textbd{0.66} & \\textbd\n                                                  {0.86} \\\\\nThe control sequence at the end of the top line\nof your error message was never \\def'ed. If you have\nmisspelled it (e.g., `\\hobx'), type `I' and the correct\nspelling (e.g., `I\\hbox'). Otherwise just continue,\nand I'll forget about whatever was undefined.\n",
+      "raw": "./main.tex:64: Undefined control sequence.\nl.64     Ours + templates & \\textbd\n                                   {0.66} & \\textbd{0.86} \\\\\nThe control sequence at the end of the top line\nof your error message was never \\def'ed. If you have\nmisspelled it (e.g., `\\hobx'), type `I' and the correct\nspelling (e.g., `I\\hbox'). Otherwise just continue,\nand I'll forget about whatever was undefined.\n\n./main.tex:64: Undefined control sequence.\nl.64 ...Ours + templates & \\textbd{0.66} & \\textbd\n                                                  {0.86} \\\\\nThe control sequence at the end of the top line\nof your error message was never \\def'ed. If you have\nmisspelled it (e.g., `\\hobx'), type `I' and the correct\nspelling (e.g., `I\\hbox'). Otherwise just continue,\nand I'll forget about whatever was undefined.\n",
+      "source": "latex",
+      "ruleId": "hint_undefined_control_sequence",
+      "command": "\\textbd",
+      "hint": "The compiler is having trouble understanding a command you have used. Check that the command is spelled correctly. If the command is part of a package, make sure you have included the package in your preamble using \\usepackage{...}.",
+      "hintUrl": "https://www.overleaf.com/learn/Errors/Undefined_control_sequence"
+    }
+  ],
+  "durationMs": 1269
+}

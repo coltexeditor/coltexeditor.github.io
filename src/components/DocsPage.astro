@@ -1,0 +1,85 @@
+---
+// A section of the documentation: the sections on the left, the article in the middle, its
+// headings on the right (as in ColTex's own help, pages/help/doc-view.tsx).
+import Base from '../layouts/Base.astro'
+import { dictionary, type Lang } from '../i18n/index.ts'
+import { SECTIONS, docPage, docsHref } from '../lib/docs.ts'
+
+const { lang, id } = Astro.props as { lang: Lang; id: string }
+const t = dictionary(lang)
+const { Content, headings } = await docPage(lang, id)
+const section = SECTIONS.find(s => s.id === id)!
+const title = section.titles[lang] ?? section.title
+const index = SECTIONS.findIndex(s => s.id === id)
+const [prev, next] = [SECTIONS[index - 1], SECTIONS[index + 1]]
+---
+
+<Base lang={lang} title={`${title} · ${t.docs.title}`}>
+  <div class="mx-auto grid max-w-6xl gap-10 px-4 py-10 sm:px-6 lg:grid-cols-[13rem_minmax(0,1fr)] xl:grid-cols-[13rem_minmax(0,1fr)_12rem]">
+    <nav class="lg:sticky lg:top-24 lg:self-start" aria-label={t.docs.title}>
+      <details class="docs-nav group">
+        <summary class="flex cursor-pointer list-none items-center justify-between rounded-lg border border-border px-3 py-2 text-sm lg:pointer-events-none lg:mb-2 lg:border-0 lg:p-0">
+          <span class="text-xs font-medium tracking-wide text-muted-foreground uppercase max-lg:hidden">{t.docs.title}</span>
+          <span class="font-medium lg:hidden">{title}</span>
+          <svg viewBox="0 0 24 24" class="size-4 text-muted-foreground transition-transform group-open:rotate-180 lg:hidden" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m6 9 6 6 6-6"></path></svg>
+        </summary>
+        <ul class="mt-2 space-y-0.5 text-sm lg:mt-0">
+          {
+            SECTIONS.map(s => (
+              <li>
+                <a
+                  href={docsHref(lang, s.id)}
+                  class:list={[
+                    'block rounded-md px-3 py-1.5 transition-colors',
+                    s.id === id ? 'bg-muted font-medium text-foreground' : 'text-muted-foreground hover:bg-muted/60 hover:text-foreground',
+                  ]}
+                >
+                  {s.titles[lang] ?? s.title}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+      </details>
+    </nav>
+    <article class="doc min-w-0">
+      <Content />
+      <div class="mt-16 flex justify-between gap-4 border-t border-border pt-6 text-sm">
+        {prev ? <a class="text-muted-foreground hover:text-foreground" href={docsHref(lang, prev.id)}>← {prev.titles[lang] ?? prev.title}</a> : <span />}
+        {next && <a class="text-muted-foreground hover:text-foreground" href={docsHref(lang, next.id)}>{next.titles[lang] ?? next.title} →</a>}
+      </div>
+    </article>
+    <aside class="hidden xl:block">
+      <div class="sticky top-24">
+        <div class="mb-2 text-xs font-medium tracking-wide text-muted-foreground uppercase">{t.docs.onThisPage}</div>
+        <ul class="space-y-1.5 text-sm">
+          {
+            headings
+              .filter(h => h.depth === 2)
+              .map(h => (
+                <li>
+                  <a class="text-muted-foreground hover:text-foreground" href={`#${h.slug}`}>
+                    {h.text}
+                  </a>
+                </li>
+              ))
+          }
+        </ul>
+      </div>
+    </aside>
+  </div>
+</Base>
+
+<script>
+  // The list of sections: open beside the article on wide screens, folded above it on narrow ones.
+  const nav = document.querySelector<HTMLDetailsElement>('.docs-nav')!
+  const wide = matchMedia('(min-width: 1024px)')
+  const fit = () => (nav.open = wide.matches)
+  wide.addEventListener('change', fit)
+  fit()
+
+  // Keys as on this computer: ⌘ ⇧ ⌥ ⌃ on a Mac (see src/lib/remark-docs.mjs).
+  if (/Mac|iPhone|iPad/.test(navigator.platform)) {
+    document.querySelectorAll<HTMLElement>('.doc kbd[data-mac]').forEach(k => (k.textContent = k.dataset.mac!))
+  }
+</script>

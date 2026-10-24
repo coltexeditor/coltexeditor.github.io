@@ -1,0 +1,92 @@
+---
+import { dictionary, type Lang } from '../i18n/index.ts'
+import { installSpec } from '../lib/install-spec.ts'
+import { finalLines, logoPixels } from '../lib/replay.ts'
+
+const { lang } = Astro.props as { lang: Lang }
+const t = dictionary(lang)
+const spec = installSpec(lang)
+const lines = finalLines(spec)
+---
+
+<div class="replay term overflow-hidden rounded-xl border border-black/10 shadow-xl shadow-black/10 dark:border-white/10" data-spec={JSON.stringify(spec)}>
+  <div class="flex h-10 items-center gap-2 border-b border-white/5 px-4">
+    <span class="size-3 rounded-full bg-white/15"></span>
+    <span class="size-3 rounded-full bg-white/15"></span>
+    <span class="size-3 rounded-full bg-white/15"></span>
+    <span class="ml-3 font-mono text-xs opacity-50">bash</span>
+    <button
+      type="button"
+      class="replay-again ml-auto flex items-center gap-1.5 rounded-md px-2 py-1 text-xs opacity-0 transition hover:bg-white/10 focus-visible:opacity-100"
+      tabindex="-1"
+    >
+      <svg viewBox="0 0 24 24" class="size-3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"></path><path d="M3 3v5h5"></path>
+      </svg>
+      {t.hero.replay}
+    </button>
+  </div>
+  <div class="term-screen h-[27rem] px-4 py-3 text-[12px]" aria-label="install.sh">
+    {
+      lines.map(line =>
+        Array.isArray(line) ? (
+          <div class="term-line">{line.length ? line.map(seg => <span class={seg.c}>{seg.t}</span>) : ' '}</div>
+        ) : (
+          <div class="term-logo">
+            <svg class="term-mark" viewBox={`0 0 ${spec.logo.pixels[0].length} ${spec.logo.pixels.length}`} shape-rendering="crispEdges">
+              {logoPixels(spec.logo, spec.logo.stroke.length).map(px => <rect x={px.x} y={px.y} width="1.02" height="1.02" fill={px.white ? '#fff' : 'rgb(37 99 235)'} />)}
+            </svg>
+            <div class="term-logo-text">
+              <b>{spec.logo.name}</b>
+              <span class="d">{spec.logo.tagline}</span>
+            </div>
+          </div>
+        ),
+      )
+    }
+  </div>
+</div>
+
+<script>
+  import { play, type Spec } from '../lib/replay.ts'
+
+  // Plays once it is mostly in view; the finished screen stays for those who prefer less
+  // motion (Replay still plays it on request).
+  const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches
+  for (const el of document.querySelectorAll<HTMLElement>('.replay')) {
+    const spec = JSON.parse(el.dataset.spec!) as Spec
+    const screen = el.querySelector<HTMLElement>('.term-screen')!
+    const again = el.querySelector<HTMLButtonElement>('.replay-again')!
+    let run: AbortController | null = null
+    const start = async () => {
+      run?.abort()
+      const current = (run = new AbortController())
+      again.classList.add('opacity-0')
+      again.tabIndex = -1
+      try {
+        await play(screen, spec, current.signal)
+      } catch {
+        return // stopped by a new run
+      }
+      again.classList.remove('opacity-0')
+      again.tabIndex = 0
+    }
+    again.addEventListener('click', start)
+    if (reduced) {
+      screen.scrollTop = screen.scrollHeight
+      again.classList.remove('opacity-0')
+      again.tabIndex = 0
+      continue
+    }
+    screen.replaceChildren()
+    const watch = new IntersectionObserver(
+      entries => {
+        if (!entries.some(e => e.isIntersecting)) return
+        watch.disconnect()
+        start()
+      },
+      { threshold: 0.45 },
+    )
+    watch.observe(el)
+  }
+</script>

@@ -1,0 +1,14 @@
+/node_modules/
+/dist/
+/.astro/
+# Fetched from the ColTex repository by scripts/sync.mjs (its latest release).
+/src/generated/
+/public/install.sh
+/public/images/editor.png
+# Local notes, as in the ColTex repository.
+/project.log
+/CLAUDE.md
+/.claude/
+/.cache/
+/public/demo/
+/public/version.txt

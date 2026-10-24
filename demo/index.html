@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>ColTex demo</title>
+    <script>
+      // As ColTex's index.html: the theme before the first paint: ?theme=, else the last one picked,
+      // else the system's.
+      try {
+        var q = new URLSearchParams(location.search).get('theme')
+        var c = q || (localStorage.getItem('coltex:theme') || '').split(':').pop() || (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : '')
+        if (c === 'dark' || c === 'moss' || c === 'plum') document.documentElement.classList.add('dark')
+        if (c === 'forest' || c === 'moss' || c === 'lavender' || c === 'plum') document.documentElement.dataset.theme = c
+      } catch (e) {}
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/demo/entry.ts"></script>
+  </body>
+</html>

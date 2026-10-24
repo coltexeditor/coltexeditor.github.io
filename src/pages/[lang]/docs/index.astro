@@ -1,0 +1,11 @@
+---
+import DocsPage from '../../../components/DocsPage.astro'
+import { LANGUAGES, type Lang } from '../../../i18n/index.ts'
+
+export function getStaticPaths() {
+  return LANGUAGES.filter(l => l.path).map(l => ({ params: { lang: l.path }, props: { id: l.id } }))
+}
+const { id } = Astro.props as { id: Lang }
+---
+
+<DocsPage lang={id} id="getting-started" />

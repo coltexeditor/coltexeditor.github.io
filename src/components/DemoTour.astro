@@ -1,0 +1,137 @@
+---
+// The tour at the top of the page: the demo (ColTex's own web app, /demo/) playing ?tour in a
+// frame drawn at 1280×800 and scaled to fit, so it looks the same at any width. It can't be
+// clicked (the button below opens the demo itself). The chapter playing is posted by the tour.
+import { dictionary, type Lang } from '../i18n/index.ts'
+
+const { lang } = Astro.props as { lang: Lang }
+const t = dictionary(lang)
+---
+
+<div class="demo-tour" data-lang={lang}>
+  <div class="demo-tour-frame overflow-hidden rounded-xl border border-border bg-card shadow-2xl shadow-black/15">
+    <img src="/images/editor.png" alt="" class="demo-tour-poster" />
+    <iframe title="ColTex" tabindex="-1" aria-hidden="true" width="1280" height="800"></iframe>
+  </div>
+  <div class="mt-4 grid grid-cols-4 gap-x-3 gap-y-2 lg:grid-cols-11">
+    {
+      t.tour.chapters.map(name => (
+        <div class="demo-tour-chapter text-xs text-muted-foreground transition-colors">
+          <div class="mb-1.5 h-[3px] overflow-hidden rounded-full bg-border">
+            <div class="demo-tour-bar h-full w-0 bg-primary" />
+          </div>
+          <span class="block truncate">{name}</span>
+        </div>
+      ))
+    }
+  </div>
+  <div class="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
+    <a href={`/demo/?lang=${lang}`} data-demo-link target="_blank" rel="noopener" class="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-card px-4 text-sm font-medium shadow-sm transition-colors hover:bg-muted">
+      {t.tour.try}
+      <span aria-hidden="true">→</span>
+    </a>
+    <span class="text-xs text-muted-foreground">{t.tour.note}</span>
+  </div>
+</div>
+
+<style>
+  .demo-tour-frame {
+    position: relative;
+    aspect-ratio: 1280 / 800;
+  }
+  .demo-tour-poster,
+  .demo-tour-frame iframe {
+    position: absolute;
+    top: 0;
+    left: 0;
+  }
+  .demo-tour-poster {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: top;
+    transition: opacity 0.4s ease;
+  }
+  .demo-tour-frame iframe {
+    border: 0;
+    transform-origin: 0 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.4s ease;
+  }
+  .demo-tour.playing iframe {
+    opacity: 1;
+  }
+  .demo-tour.playing .demo-tour-poster {
+    opacity: 0;
+  }
+  .demo-tour-chapter.on {
+    color: var(--foreground);
+  }
+  .demo-tour-chapter.done .demo-tour-bar {
+    width: 100%;
+  }
+  .demo-tour-chapter.on .demo-tour-bar {
+    width: 100%;
+    transition: width var(--chapter-ms, 8s) linear;
+  }
+</style>
+
+<script>
+  // Rough lengths of the tour's chapters, for their bars (the tour itself says when each starts).
+  const CHAPTER_MS = [5000, 3000, 9000, 6000, 12000, 18000, 10000, 10000, 6000, 18000, 27000]
+
+  for (const root of document.querySelectorAll<HTMLElement>('.demo-tour')) {
+    const frame = root.querySelector<HTMLElement>('.demo-tour-frame')!
+    const iframe = root.querySelector('iframe')!
+    const chapters = [...root.querySelectorAll<HTMLElement>('.demo-tour-chapter')]
+    const fit = () => (iframe.style.transform = `scale(${frame.clientWidth / 1280})`)
+    new ResizeObserver(fit).observe(frame)
+    fit()
+
+    const theme = () => (document.documentElement.classList.contains('dark') ? 'dark' : 'light')
+    // The demo opens in the page's theme.
+    root.querySelector<HTMLAnchorElement>('[data-demo-link]')!.addEventListener('click', e => {
+      const a = e.currentTarget as HTMLAnchorElement
+      a.href = `/demo/?lang=${root.dataset.lang}&theme=${theme()}`
+    })
+    const start = () => {
+      root.classList.remove('playing')
+      chapters.forEach(c => c.classList.remove('on', 'done'))
+      iframe.src = `/demo/?tour&lang=${root.dataset.lang}&theme=${theme()}`
+    }
+    addEventListener('message', e => {
+      if (e.origin !== location.origin || e.source !== iframe.contentWindow || typeof e.data?.coltexTour !== 'number') return
+      const at = e.data.coltexTour as number
+      root.classList.add('playing')
+      chapters.forEach((c, i) => {
+        c.classList.toggle('done', i < at)
+        c.classList.remove('on')
+        if (i === at) {
+          c.style.setProperty('--chapter-ms', `${CHAPTER_MS[i] ?? 8000}ms`)
+          void c.offsetWidth
+          c.classList.add('on')
+        }
+      })
+    })
+    // Following the page's light or dark theme.
+    let shown = theme()
+    new MutationObserver(() => {
+      if (theme() !== shown && iframe.src) {
+        shown = theme()
+        start()
+      }
+    }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+
+    // Less motion asked for: the picture stays; the demo is a click away.
+    if (matchMedia('(prefers-reduced-motion: reduce)').matches) continue
+    new IntersectionObserver(
+      (entries, observer) => {
+        if (!entries.some(e => e.isIntersecting)) return
+        observer.disconnect()
+        start()
+      },
+      { rootMargin: '200px' },
+    ).observe(root)
+  }
+</script>

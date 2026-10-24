@@ -1,0 +1,12 @@
+---
+import DocsPage from '../../../components/DocsPage.astro'
+import { LANGUAGES, type Lang } from '../../../i18n/index.ts'
+import { SECTIONS } from '../../../lib/docs.ts'
+
+export function getStaticPaths() {
+  return LANGUAGES.filter(l => l.path).flatMap(l => SECTIONS.map(s => ({ params: { lang: l.path, section: s.id }, props: { id: l.id } })))
+}
+const { id } = Astro.props as { id: Lang }
+---
+
+<DocsPage lang={id} id={Astro.params.section!} />

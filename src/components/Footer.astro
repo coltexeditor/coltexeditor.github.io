@@ -1,0 +1,15 @@
+---
+import { dictionary, type Lang } from '../i18n/index.ts'
+
+const { lang } = Astro.props as { lang: Lang }
+const t = dictionary(lang)
+const repo = 'https://github.com/coltexeditor/coltexeditor.github.io'
+---
+
+<footer class="border-t border-border">
+  <p class="mx-auto flex max-w-6xl flex-col items-center gap-x-3 gap-y-1 px-4 py-8 text-sm text-muted-foreground sm:flex-row sm:justify-center sm:px-6">
+    <span>© {new Date().getFullYear()} · <a class="hover:text-foreground" href={`${repo}/blob/main/LICENSE`}>AGPL-3.0</a></span>
+    <span class="hidden sm:inline" aria-hidden="true">·</span>
+    <a class="hover:text-foreground" href="https://pages.github.com/">{t.footer.poweredBy}</a>
+  </p>
+</footer>

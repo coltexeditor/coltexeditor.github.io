@@ -1,0 +1,10 @@
+---
+import DocsPage from '../../components/DocsPage.astro'
+import { SECTIONS } from '../../lib/docs.ts'
+
+export function getStaticPaths() {
+  return SECTIONS.map(s => ({ params: { section: s.id } }))
+}
+---
+
+<DocsPage lang="en" id={Astro.params.section!} />

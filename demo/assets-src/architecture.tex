@@ -1,0 +1,18 @@
+% demo/project/figures/architecture.pdf: pdflatex architecture.tex in the compiler image.
+\documentclass[tikz,border=4pt]{standalone}
+\usetikzlibrary{arrows.meta,positioning}
+\begin{document}
+\begin{tikzpicture}[
+    res/.style={circle,draw=blue!60!black,fill=blue!12,minimum size=7mm,font=\small},
+    box/.style={draw,rounded corners=2pt,fill=gray!8,minimum height=9mm,align=center,font=\small},
+    >={Stealth[length=2.2mm]}]
+  \foreach \i/\x/\y in {1/0/0, 2/1.1/0.7, 3/2.1/0.1, 4/1.5/-0.9, 5/0.4/-1.1}
+    \node[res] (r\i) at (\x,\y) {$v_{\i}$};
+  \foreach \a/\b in {1/2, 2/3, 3/4, 4/5, 5/1, 2/4, 1/4}
+    \draw[blue!45!black,thick] (r\a) -- (r\b);
+  \node[box] (mp) at (4.3,-0.2) {Message\\passing $\times K$};
+  \node[box,right=0.8cm of mp] (cm) {Contact\\map};
+  \draw[->,thick] (2.75,-0.2) -- (mp.west);
+  \draw[->,thick] (mp) -- (cm);
+\end{tikzpicture}
+\end{document}

@@ -1,0 +1,11 @@
+{
+  "status": "success",
+  "outputFiles": [
+    "output.pdf",
+    "output.log",
+    "output.synctex.gz",
+    "output.blg"
+  ],
+  "diagnostics": [],
+  "durationMs": 1246
+}

@@ -1,0 +1,69 @@
+---
+import '../styles/global.css'
+import { LANGUAGES, dictionary, samePage, type Lang } from '../i18n/index.ts'
+import Header from '../components/Header.astro'
+import Footer from '../components/Footer.astro'
+
+const { lang, title } = Astro.props as { lang: Lang; title?: string }
+const t = dictionary(lang)
+const html = LANGUAGES.find(l => l.id === lang)!.html
+const site = Astro.site!.href.replace(/\/$/, '')
+---
+
+<!doctype html>
+<html lang={html} class="no-js">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title ?? t.meta.title}</title>
+    <meta name="description" content={t.meta.description} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    {LANGUAGES.map(l => <link rel="alternate" hreflang={l.html} href={site + samePage(Astro.url.pathname, lang, l.id)} />)}
+    <meta property="og:title" content={t.meta.title} />
+    <meta property="og:description" content={t.meta.description} />
+    <meta property="og:image" content={`${site}/images/editor.png`} />
+    <script is:inline>
+      // The theme before the first paint: the one picked here, else the system's.
+      ;(() => {
+        const root = document.documentElement
+        root.classList.remove('no-js')
+        let theme = null
+        try {
+          theme = localStorage.getItem('theme')
+        } catch {}
+        const system = matchMedia('(prefers-color-scheme: dark)')
+        root.classList.toggle('dark', theme ? theme === 'dark' : system.matches)
+        // Until a theme is picked here, the page follows the system's as it changes.
+        system.addEventListener('change', e => {
+          let picked = null
+          try {
+            picked = localStorage.getItem('theme')
+          } catch {}
+          if (!picked) root.classList.toggle('dark', e.matches)
+        })
+      })()
+    </script>
+  </head>
+  <body class="min-h-dvh">
+    <Header lang={lang} />
+    <main>
+      <slot />
+    </main>
+    <Footer lang={lang} />
+    <script>
+      // Sections fade in as they scroll into view, once.
+      const seen = new IntersectionObserver(
+        entries => {
+          for (const e of entries) {
+            if (!e.isIntersecting) continue
+            e.target.classList.add('shown')
+            seen.unobserve(e.target)
+          }
+        },
+        { rootMargin: '0px 0px -8% 0px' },
+      )
+      document.querySelectorAll('.reveal').forEach(el => seen.observe(el))
+
+    </script>
+  </body>
+</html>
