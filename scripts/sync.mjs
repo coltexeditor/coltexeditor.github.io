@@ -10,7 +10,7 @@ import fs from 'node:fs/promises'
 import path from 'node:path'
 import { promisify } from 'node:util'
 
-const REPO = process.env.COLTEX_REPO ?? 'Lewen-Cai/coltex'
+const REPO = process.env.COLTEX_REPO ?? 'coltexeditor/coltex'
 const URL = process.env.COLTEX_REPO_URL ?? `https://github.com/${REPO}.git`
 const CHECKOUT = '.cache/latest'
 const PATHS = ['install.sh', 'docs/images', 'apps/web/src/pages/help', 'apps/web/src/locales']

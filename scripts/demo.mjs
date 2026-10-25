@@ -7,7 +7,7 @@ import fs from 'node:fs'
 import path from 'node:path'
 
 const VERSION = fs.readFileSync('demo/VERSION', 'utf8').trim()
-const REPO = process.env.COLTEX_REPO_URL ?? 'https://github.com/Lewen-Cai/coltex.git'
+const REPO = process.env.COLTEX_REPO_URL ?? 'https://github.com/coltexeditor/coltex.git'
 const CHECKOUT = '.cache/coltex'
 const WEB = path.join(CHECKOUT, 'apps/web')
 const run = (cmd, args, cwd = '.') => execFileSync(cmd, args, { cwd, stdio: 'inherit' })

@@ -1,6 +1,6 @@
 # coltexeditor.github.io
 
-The website of [ColTex](https://github.com/Lewen-Cai/coltex), a self-hosted collaborative LaTeX editor with a built-in AI agent: <https://coltexeditor.github.io>.
+The website of [ColTex](https://github.com/coltexeditor/coltex), a self-hosted collaborative LaTeX editor with a built-in AI agent: <https://coltexeditor.github.io>.
 
 - **Home page** in ColTex's 14 interface languages, with a tour of ColTex playing at the top.
 - **Documentation**: ColTex's own help, in every language.
@@ -31,4 +31,4 @@ pnpm build              # dist/
 
 ## Licence
 
-AGPL-3.0, like ColTex: the demo is ColTex's web app (including code ported from Overleaf, AGPL-3.0) together with `demo/`, and this repository is its source. ColTex's [NOTICE](https://github.com/Lewen-Cai/coltex/blob/main/NOTICE) lists the code it ports from others.
+AGPL-3.0, like ColTex: the demo is ColTex's web app (including code ported from Overleaf, AGPL-3.0) together with `demo/`, and this repository is its source. ColTex's [NOTICE](https://github.com/coltexeditor/coltex/blob/main/NOTICE) lists the code it ports from others.

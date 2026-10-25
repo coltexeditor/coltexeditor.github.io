@@ -29,7 +29,7 @@ jobs:
         name: A newer ColTex release?
         run: |
           if [ "${{ github.event_name }}" != schedule ]; then echo build=true >> "$GITHUB_OUTPUT"; exit 0; fi
-          latest=$(git ls-remote --tags --refs https://github.com/Lewen-Cai/coltex.git 'v*' | sed 's|.*refs/tags/||' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+          latest=$(git ls-remote --tags --refs https://github.com/coltexeditor/coltex.git 'v*' | sed 's|.*refs/tags/||' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
           shown=$(curl -fsS https://coltexeditor.github.io/version.txt || true)
           echo "latest=$latest shown=$shown"
           if [ -n "$latest" ] && [ "$latest" != "$shown" ]; then echo build=true >> "$GITHUB_OUTPUT"; else echo build=false >> "$GITHUB_OUTPUT"; fi
