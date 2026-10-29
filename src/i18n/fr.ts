@@ -36,6 +36,7 @@ export default {
     chapters: ['Se connecter', 'Espace de travail', 'Rédaction', 'Éditeur visuel', 'Collaboration', 'Agent IA', 'Relecture', 'Références', 'Historique', 'Paramètres', 'Administration'],
     try: 'Essayer la démo',
     note: 'La démo fonctionne entièrement dans votre navigateur.',
+    position: 'Position dans la visite',
   },
   why: {
     title: 'Pourquoi ColTex ?',

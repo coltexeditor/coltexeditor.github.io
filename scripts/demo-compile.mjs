@@ -11,7 +11,8 @@ import path from 'node:path'
 import { STATES, applyEdits, stateText } from '../demo/src/mock/scenario.ts'
 import { parseBibLog, parseLatexLog } from '../.cache/coltex/packages/log-parser/src/index.ts'
 
-const IMAGE = process.argv[2] ?? 'ghcr.io/lewen-cai/coltex-compiler:v0.0.4-standard'
+// The compiler of the ColTex version the demo is (demo/VERSION).
+const IMAGE = process.argv[2] ?? `ghcr.io/coltexeditor/coltex-compiler:${fs.readFileSync('demo/VERSION', 'utf8').trim()}-standard`
 const PROJECT = 'demo/project'
 const OUT = 'demo/compiled'
 

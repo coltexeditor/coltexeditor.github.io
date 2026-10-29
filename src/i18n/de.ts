@@ -36,6 +36,7 @@ export default {
     chapters: ['Anmelden', 'Arbeitsbereich', 'Schreiben', 'Visueller Editor', 'Zusammenarbeit', 'KI-Agent', 'Prüfen', 'Literatur', 'Verlauf', 'Einstellungen', 'Verwaltung'],
     try: 'Demo ausprobieren',
     note: 'Die Demo läuft vollständig in Ihrem Browser.',
+    position: 'Position in der Tour',
   },
   why: {
     title: 'Warum ColTex?',

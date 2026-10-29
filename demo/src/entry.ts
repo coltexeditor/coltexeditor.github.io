@@ -1,15 +1,16 @@
-// The demo's entry: answer the app's requests here, pick the language and theme it was opened
-// with (?lang=, ?theme=), then start ColTex's own web app; ?tour plays the tour.
-import { installMock } from './mock/install.ts'
+// The demo's entry: pick the language and theme it was opened with (?lang=, ?theme=), answer
+// the app's requests here, then start ColTex's own web app; ?tour plays the tour.
 import { DEMO_EMAIL, DEMO_PASSWORD } from './mock/store.ts'
 
-installMock()
+// The language first: the app's i18n module reads it once, when it is loaded (the mock loads it).
 const params = new URLSearchParams(location.search)
 try {
   const lang = params.get('lang')
   if (lang) localStorage.setItem('coltex:locale', lang)
 } catch {}
 
+const { installMock } = await import('./mock/install.ts')
+installMock()
 await import('../main.tsx')
 if (params.has('tour')) await import('./tour.ts')
 else prefillSignIn()

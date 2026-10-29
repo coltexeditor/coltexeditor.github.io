@@ -6,7 +6,8 @@
 import { BOB, CAROL, DEMO_PROJECT, ME, projects } from './store.ts'
 import { onOpen } from './streams.ts'
 import { DEMO_ONLY, HttpError, type Req } from './http.ts'
-import { CONNECTED, CUSTOM_PROVIDERS, LOCAL, MODELS, PROVIDERS, STRONG, type ModelInfo } from './models.ts'
+import { CONNECTED, CUSTOM_PROVIDERS, LOCAL, MODELS, PROVIDERS, STRONG, web, type ModelInfo } from './models.ts'
+import { sleep } from './time.ts'
 
 type Route = (method: string, path: string, handler: (req: Req, params: Record<string, string>) => unknown) => void
 
@@ -18,7 +19,6 @@ const MiB = 1024 ** 2
 const loaded = Date.now()
 const iso = (t: number) => new Date(t).toISOString()
 const ago = (ms: number) => iso(Date.now() - ms)
-const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 const browserZone = () => {
   try {
     return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC'
@@ -43,6 +43,7 @@ type CustomProvider = (typeof CUSTOM_PROVIDERS)[number]
 const settings: {
   auto: { judge: { provider: string; id: string } | null; light: { provider: string; id: string } | null; strong: { provider: string; id: string } | null }
   customProviders: CustomProvider[]
+  web: typeof web
 } = {
   auto: {
     judge: { provider: LIGHT.provider, id: LIGHT.id },
@@ -50,6 +51,7 @@ const settings: {
     strong: { provider: STRONG.provider, id: STRONG.id },
   },
   customProviders: [...CUSTOM_PROVIDERS],
+  web,
 }
 
 const healthy = { state: 'healthy', failures: 0, lastError: null, lastErrorAt: null }
@@ -103,7 +105,7 @@ type Account = {
 
 const fictional = (first: string, last: string) => ({ id: `demo-${first}-${last}`.toLowerCase(), name: `${first} ${last}`, email: `${first.toLowerCase()}@lab.example` })
 const noCustom = () => ({ policy: null, limits: null })
-const accounts: Account[] = [
+export const accounts: Account[] = [
   { person: ME, role: 'admin', banned: false, createdAt: ago(60 * DAY), team: null, groupId: null, custom: noCustom(), use: { perDay: 9, strong: 0.75 } },
   { person: BOB, role: 'manager', banned: false, createdAt: ago(58 * DAY), team: null, groupId: 'grp-lab', custom: noCustom(), use: { perDay: 7, strong: 0.8 } },
   { person: CAROL, role: 'user', banned: false, createdAt: ago(55 * DAY), team: null, groupId: 'grp-lab', custom: noCustom(), use: { perDay: 4, strong: 0.6 } },
@@ -136,6 +138,8 @@ const managed = (a: Account) => ({
   banned: a.banned,
   createdAt: a.createdAt,
   managerId: teamOf(a),
+  locked: false,
+  twoFactor: a.person.id === ME.id || a.role === 'manager',
 })
 /** The system admin manages anyone but themselves. */
 function target(id: string) {
@@ -381,7 +385,7 @@ function stats() {
       { id: 'valkey', status: 'ok', latencyMs: 1 },
       { id: 'compiler', status: 'ok', latencyMs: null },
     ],
-    compiler: { workers: 1, waiting: 0, active, failed: 3 },
+    compiler: { workers: 1, slots: 4, waiting: 0, active, failed: 3 },
     compiles: { total, failed, avgMs: total ? Math.round(duration / total) : null },
     host: {
       cpus: 8,
@@ -843,18 +847,27 @@ export function register(route: Route) {
   })
 
   // AI services
-  route('GET', '/api/admin/ai', () => ({ settings, providers: providers() }))
+  // DeepSeek's search runs on the connected DeepSeek provider's key; Tavily has its own.
+  route('GET', '/api/admin/ai', () => ({ settings, providers: providers(), web: { keys: ['tavily'], deepseekConnected: true, native: [] } }))
   route('GET', '/api/admin/ai/models', () => models())
   route('PUT', '/api/admin/ai/settings', async req => {
     const patch = await req.body()
     if (patch.auto) settings.auto = { judge: patch.auto.judge ?? null, light: patch.auto.light ?? null, strong: patch.auto.strong ?? null }
     if (Array.isArray(patch.customProviders)) settings.customProviders = patch.customProviders
+    if (patch.web) Object.assign(web, patch.web)
     return settings
   })
   route('POST', '/api/admin/ai/test', async () => {
     const ms = 650 + Math.round(700 * Math.random())
     await sleep(ms)
     return { ok: true, message: 'OK', ms }
+  })
+  route('PUT', '/api/admin/ai/web/keys/:service', refuse)
+  route('DELETE', '/api/admin/ai/web/keys/:service', refuse)
+  route('POST', '/api/admin/ai/web/test', async () => {
+    const ms = 900 + Math.round(900 * Math.random())
+    await sleep(ms)
+    return { ok: true, message: 'OK', results: 5, ms }
   })
   route('POST', '/api/admin/ai/providers/:provider/login', refuse)
   route('DELETE', '/api/admin/ai/providers/:provider/credential', refuse)

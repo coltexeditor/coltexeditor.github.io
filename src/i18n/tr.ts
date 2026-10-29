@@ -36,6 +36,7 @@ export default {
     chapters: ['Oturum aç', 'Çalışma alanı', 'Yazma', 'Görsel düzenleyici', 'İş birliği', 'YZ ajanı', 'İnceleme', 'Kaynaklar', 'Geçmiş', 'Ayarlar', 'Yönetim'],
     try: 'Demoyu deneyin',
     note: 'Demo tamamen tarayıcınızda çalışır.',
+    position: 'Turdaki konum',
   },
   why: {
     title: 'Neden ColTex?',

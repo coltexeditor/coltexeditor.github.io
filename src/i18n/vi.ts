@@ -36,6 +36,7 @@ export default {
     chapters: ['Đăng nhập', 'Không gian làm việc', 'Soạn thảo', 'Trình soạn thảo trực quan', 'Cộng tác', 'Tác tử AI', 'Duyệt', 'Tài liệu tham khảo', 'Lịch sử', 'Cài đặt', 'Quản trị'],
     try: 'Dùng thử bản demo',
     note: 'Bản demo chạy hoàn toàn trong trình duyệt của bạn.',
+    position: 'Vị trí trong phần giới thiệu',
   },
   why: {
     title: 'Vì sao chọn ColTex?',

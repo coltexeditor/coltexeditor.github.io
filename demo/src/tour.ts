@@ -1,8 +1,13 @@
-// The tour (?tour): about a minute of using ColTex, played on the real interface. A pointer
+// The tour (?tour): about two minutes of using ColTex, played on the real interface. A pointer
 // moves to what it clicks; typing goes into the real inputs and editor; Bob Baker's cursor and
 // avatar come from the demo's awareness. Labels are found in the interface's own language
-// through t(). At the end it starts over (a reload resets the demo). The page hosting it can
-// follow along: each scene is posted to the parent as { coltexTour: index }.
+// through t(). At the end it starts over (a reload resets the demo).
+//
+// Time: the tour runs on its own clock, the sum of its pauses (waiting for the interface doesn't
+// count), so the same moment always has the same time. ?seek=<ms>, or { coltexSeek: ms } posted
+// by the page hosting it, plays everything before that moment at once (pauses skipped) and goes
+// on from there; going back needs a reload with ?seek. The hosting page is told where the tour is
+// ({ coltexTour: { at, chapter, seeking } }, several times a second).
 import { EditorView } from '@codemirror/view'
 import { closeCompletion } from '@codemirror/autocomplete'
 import { t } from '../lib/i18n.ts'
@@ -10,8 +15,68 @@ import { userColor } from '../lib/collab.ts'
 import { applyTrackedEdits } from '@coltex/review'
 import { BOB, CAROL, DEMO_EMAIL, DEMO_PASSWORD, DEMO_PROJECT, ME, bump, docFor, peerCursor, peerJoin, peerType } from './mock/store.ts'
 import { EDITS } from './mock/scenario.ts'
+import { fastWhile } from './mock/time.ts'
 
-const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
+// ---- The clock --------------------------------------------------------------------------------
+
+/** Tour time passed (ms), not counting the pause under way. */
+let clock = 0
+/** The pause under way: when it started (real time) and how long is left of it. */
+let pause: { since: number; ms: number } | null = null
+/** Ends the pause under way early (a seek past it). */
+let wake: (() => void) | null = null
+/** Until the clock reaches this, pauses are skipped. */
+let target = Number(new URLSearchParams(location.search).get('seek') ?? 0) || 0
+const seeking = () => clock < target
+const now = () => clock + (pause ? Math.min(pause.ms, performance.now() - pause.since) : 0)
+// The made-up server answers at once while the tour plays through.
+fastWhile(seeking)
+
+/**
+ * Lets the page do what it has queued (React renders from a MessageChannel task too, so it comes
+ * first). Not a timer: nested timers wait at least 4 ms each, which made playing through slow.
+ */
+const channel = new MessageChannel()
+const queued: (() => void)[] = []
+channel.port1.onmessage = () => queued.shift()?.()
+const yieldToPage = () =>
+  new Promise<void>(r => {
+    queued.push(r)
+    channel.port2.postMessage(null)
+  })
+
+/** A pause of `ms` tour time: skipped while seeking (just long enough for the page to draw). */
+async function sleep(ms: number) {
+  const end = clock + ms
+  while (clock < end) {
+    if (target >= end) {
+      clock = end
+      await yieldToPage()
+      return
+    }
+    if (clock < target) clock = target
+    const rest = end - clock
+    const since = performance.now()
+    pause = { since, ms: rest }
+    const woke = await new Promise<boolean>(r => {
+      const timer = setTimeout(() => r(false), rest)
+      wake = () => {
+        clearTimeout(timer)
+        r(true)
+      }
+    })
+    wake = null
+    pause = null
+    clock += woke ? Math.min(rest, performance.now() - since) : rest
+  }
+}
+
+/** Forward from the hosting page: on from there (going back reloads the tour with ?seek). */
+addEventListener('message', e => {
+  if (e.origin !== location.origin || e.source !== parent || typeof e.data?.coltexSeek !== 'number') return
+  target = Math.max(target, e.data.coltexSeek)
+  if (target > now()) wake?.()
+})
 
 // The tour plays in a frame on the site's home page: focusing something or scrolling it into view
 // would also scroll that page to the frame (browsers do that across frames). Here both only move
@@ -40,7 +105,8 @@ async function waitFor<T>(find: () => T | null | undefined | false, timeout = 10
     const found = find()
     if (found) return found
     if (Date.now() > until) throw new Error('not found in time')
-    await sleep(60)
+    // Real time: waiting for the interface isn't tour time.
+    await new Promise(r => setTimeout(r, 60))
   }
 }
 const text = (el: Element) => (el.textContent ?? '').replace(/\s+/g, ' ').trim()
@@ -93,7 +159,7 @@ async function moveTo(target: Element | { x: number; y: number }, ms = 550) {
     p = { x: r.left + Math.min(r.width / 2, 60), y: r.top + r.height / 2 }
   }
   at = p
-  pointer.style.transitionDuration = `${ms}ms`
+  pointer.style.transitionDuration = seeking() ? '0ms' : `${ms}ms`
   pointer.style.transform = `translate(${p.x}px, ${p.y}px)`
   await sleep(ms + 80)
 }
@@ -101,19 +167,31 @@ async function moveTo(target: Element | { x: number; y: number }, ms = 550) {
 /** A full click, as a mouse makes it (Radix menus open on pointerdown, not on click). */
 async function press(el: HTMLElement, move = true) {
   if (move) await moveTo(el)
-  ripple.animate(
-    [
-      { opacity: 0.9, transform: `translate(${at.x}px, ${at.y}px) scale(0.3)` },
-      { opacity: 0, transform: `translate(${at.x}px, ${at.y}px) scale(1.4)` },
-    ],
-    { duration: 450, easing: 'ease-out' },
-  )
+  if (!seeking())
+    ripple.animate(
+      [
+        { opacity: 0.9, transform: `translate(${at.x}px, ${at.y}px) scale(0.3)` },
+        { opacity: 0, transform: `translate(${at.x}px, ${at.y}px) scale(1.4)` },
+      ],
+      { duration: 450, easing: 'ease-out' },
+    )
   const opts = { bubbles: true, cancelable: true, clientX: at.x, clientY: at.y, button: 0 }
   el.dispatchEvent(new PointerEvent('pointerdown', { ...opts, pointerType: 'mouse', isPrimary: true }))
   el.dispatchEvent(new MouseEvent('mousedown', opts))
   el.dispatchEvent(new PointerEvent('pointerup', { ...opts, pointerType: 'mouse', isPrimary: true }))
   el.dispatchEvent(new MouseEvent('mouseup', opts))
   el.click()
+  await sleep(180)
+}
+
+/**
+ * Picks an option of an open select: the pointer goes to it and clicks, and the pick itself is
+ * the keyboard's (Radix's options don't take a pick from made-up pointer events).
+ */
+async function choose(option: HTMLElement) {
+  await moveTo(option)
+  option.focus()
+  option.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, cancelable: true }))
   await sleep(180)
 }
 
@@ -125,6 +203,20 @@ async function typeInto(el: HTMLInputElement | HTMLTextAreaElement, value: strin
     setter.call(el, value.slice(0, i))
     el.dispatchEvent(new Event('input', { bubbles: true }))
     await sleep(ms + ((i * 17) % 35))
+  }
+}
+/**
+ * Types text in the interface's language in `total` ms whatever its length, so the tour takes
+ * the same time in every language (its timeline is one for all).
+ */
+async function typeTranslated(el: HTMLInputElement | HTMLTextAreaElement, value: string, total: number) {
+  el.focus()
+  const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(el), 'value')!.set!
+  const chars = [...value]
+  for (let i = 1; i <= chars.length; i++) {
+    setter.call(el, chars.slice(0, i).join(''))
+    el.dispatchEvent(new Event('input', { bubbles: true }))
+    await sleep(Math.floor((total * i) / chars.length) - Math.floor((total * (i - 1)) / chars.length))
   }
 }
 const key = (el: Element, name: string) => el.dispatchEvent(new KeyboardEvent('keydown', { key: name, bubbles: true, cancelable: true }))
@@ -163,7 +255,6 @@ async function pointAtText(view: EditorView, pos: number) {
 
 const asPeer = (p: typeof BOB) => ({ id: p.id, name: p.name, color: userColor(p.id), colorLight: userColor(p.id).replace(')', ' / 0.18)') })
 const peer = { id: BOB.id, name: BOB.name, color: userColor(BOB.id), colorLight: userColor(BOB.id).replace(')', ' / 0.18)') }
-const announce = (i: number) => parent !== window && parent.postMessage({ coltexTour: i }, location.origin)
 
 async function signIn() {
   const email = await waitFor(() => document.querySelector<HTMLInputElement>('#email'))
@@ -177,8 +268,21 @@ async function signIn() {
 }
 
 async function workspace() {
-  const row = await waitFor(() => find('a, [role=link], tr, button', 'Graph neural networks for protein folding', true))
+  const title = 'Graph neural networks for protein folding'
+  const row = await waitFor(() => find('a, [role=link], tr, button', title, true))
   await sleep(900)
+  // A new project starts from a template: by field, or found by name.
+  await press(await waitFor(() => find('button', t('New project'))))
+  await sleep(1200)
+  await press(await waitFor(() => find('[role=dialog] button, [role=dialog] [role=radio]', t('Life sciences'))))
+  await sleep(1400)
+  await press(await waitFor(() => find('[role=dialog] button, [role=dialog] [role=radio]', t('All'))))
+  const search = await waitFor(() => document.querySelector<HTMLInputElement>('#template-search'))
+  await press(search)
+  await typeInto(search, 'clinical', 60)
+  await sleep(1600)
+  await press(await waitFor(() => [...document.querySelectorAll<HTMLElement>('[role=dialog] button')].find(b => visible(b) && text(b) === t('Cancel'))))
+  await sleep(600)
   await moveTo(row, 900)
   await sleep(400)
   await press(row, false)
@@ -206,6 +310,19 @@ async function writing() {
   await sleep(400)
   await press(await waitFor(() => find('button', t('Recompile'))))
   await sleep(2000)
+  // Word, for journals that take nothing else: from the project settings' actions.
+  await press(await waitFor(() => find('nav button', t('Settings'), true)))
+  await sleep(700)
+  await press(await waitFor(() => find('[role=dialog] button', t('Actions'))))
+  await sleep(600)
+  await press(await waitFor(() => find('[role=dialog] button', t('Export to Word…'))))
+  await sleep(900)
+  await press(await waitFor(() => document.querySelector<HTMLElement>('#word-style')))
+  await sleep(700)
+  await choose(await waitFor(() => find('[role=option]', 'IEEE')))
+  await sleep(1300)
+  await press(await waitFor(() => [...document.querySelectorAll<HTMLElement>('[role=dialog] button')].find(b => visible(b) && text(b) === t('Cancel'))))
+  await sleep(500)
 }
 
 async function visual() {
@@ -266,9 +383,10 @@ async function ai() {
   const composer = await waitFor(() => [...document.querySelectorAll<HTMLTextAreaElement>('textarea')].find(visible))
   await sleep(400)
   await press(composer)
-  await typeInto(composer, t('Fix the compile errors.'), 35)
+  await typeTranslated(composer, t('Fix the compile errors.'), 1800)
   await sleep(300)
-  await press(await waitFor(() => document.querySelector<HTMLElement>(`button[aria-label="${t('Send')}"]`)))
+  // Enabled once the composer has the text (a moment later when the tour plays through at once).
+  await press(await waitFor(() => document.querySelector<HTMLButtonElement>(`button[aria-label="${t('Send')}"]:not(:disabled)`)))
   await press(await waitFor(() => find('button', t('Review')), 20_000))
   await sleep(1100)
   await press(await waitFor(() => find('button', t('Apply selected'), true)))
@@ -388,18 +506,18 @@ async function personalSettings() {
   await press(await waitFor(() => find('button', t('Light'))))
   await sleep(600)
   await page('Sync services', 2600)
+  await page('Groups', 2600)
   await page('AI agent', 4200, 600)
   await page('AI skills', 1400)
-  const skill = [...document.querySelectorAll<HTMLElement>('button, a')].find(el => visible(el) && /ieee|figure|rebuttal/i.test(text(el)))
-  if (skill) {
-    await press(skill)
-    await sleep(2200)
-  }
+  // Waited for: the list may still be loading when the tour plays through at once.
+  await press(await waitFor(() => [...document.querySelectorAll<HTMLElement>('button, a')].find(el => visible(el) && /ieee|figure|rebuttal/i.test(text(el)))))
+  await sleep(2200)
 }
 
 async function administration() {
   await page('Overview', 4200, 500)
   await page('Manage users', 3200)
+  await page('Sign-ins', 2800)
   await page('Invitations', 2600)
   await page('AI services', 3400, 400)
   await page('AI usage & access', 3600, 400)
@@ -409,13 +527,38 @@ async function administration() {
 
 const STEPS = [signIn, workspace, writing, visual, collaboration, ai, review, references, history, personalSettings, administration]
 
+/**
+ * Where each chapter starts and when the tour ends, in tour time (the hosting page draws its
+ * bar from them). Measured with ?timeline; the tour warns when a chapter starts elsewhere.
+ */
+export const TIMELINE = { starts: [0, 4736, 17018, 34360, 39380, 49976, 65770, 77902, 89832, 96062, 124482], end: 162362 }
+
+let chapter = 0
+/**
+ * Where the tour is, and how far the pause under way goes (`until`): the hosting page moves its
+ * bar on with the time only up to there, as the clock stands while the tour waits for the
+ * interface.
+ */
+function report() {
+  if (parent === window) return
+  const until = pause ? clock + pause.ms : clock
+  parent.postMessage({ coltexTour: { at: now(), until, chapter, seeking: seeking(), ...TIMELINE } }, location.origin)
+}
+
 async function play() {
   document.body.append(ripple, pointer)
   try {
     localStorage.removeItem('coltex:theme')
   } catch {}
+  const measured: number[] = []
+  const real: number[] = []
+  setInterval(report, 200)
   for (const [i, step] of STEPS.entries()) {
-    announce(i)
+    chapter = i
+    measured.push(clock)
+    real.push(Math.round(performance.now()))
+    if (Math.abs(clock - TIMELINE.starts[i]!) > 300) console.warn(`tour: ${step.name} starts at ${clock}, not ${TIMELINE.starts[i]}`)
+    report()
     try {
       await step()
     } catch (err) {
@@ -423,10 +566,15 @@ async function play() {
     }
   }
   await sleep(2500)
+  if (new URLSearchParams(location.search).has('timeline')) console.info('tour: timeline', JSON.stringify({ starts: measured, end: clock }), 'real', JSON.stringify(real.map(r => r - real[0]!)))
   try {
     localStorage.removeItem('coltex:theme')
   } catch {}
-  location.reload()
+  // From the start again, without the seek this run began with.
+  const url = new URL(location.href)
+  url.searchParams.delete('seek')
+  url.hash = ''
+  location.replace(url)
 }
 
 void play()

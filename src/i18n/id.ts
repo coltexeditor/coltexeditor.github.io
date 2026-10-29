@@ -36,6 +36,7 @@ export default {
     chapters: ['Masuk', 'Ruang kerja', 'Menulis', 'Editor visual', 'Kolaborasi', 'Agen AI', 'Tinjauan', 'Referensi', 'Riwayat', 'Pengaturan', 'Administrasi'],
     try: 'Coba demo',
     note: 'Demo ini berjalan sepenuhnya di peramban Anda.',
+    position: 'Posisi dalam tur',
   },
   why: {
     title: 'Mengapa ColTex?',

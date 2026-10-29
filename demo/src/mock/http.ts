@@ -7,6 +7,9 @@ import * as ai from './ai.ts'
 import * as review from './review.ts'
 import * as history from './history.ts'
 import * as admin from './admin.ts'
+import * as accounts from './accounts.ts'
+import * as templates from './templates.ts'
+import { sleep } from './time.ts'
 
 const pdfs = import.meta.glob<string>('../compiled/*/output.pdf', { query: '?url', import: 'default', eager: true })
 const results = import.meta.glob<{ status: string; outputFiles: string[]; diagnostics: unknown[]; durationMs: number }>('../compiled/*/result.json', {
@@ -195,7 +198,6 @@ route('PATCH', '/api/me/projects', async req => {
   }
   return undefined
 })
-route('GET', '/api/templates', () => [])
 
 // ---- A project --------------------------------------------------------------------------
 
@@ -271,7 +273,6 @@ route('POST', '/api/projects/:id/references/doi', async (req, { id }) => {
   bump(id, 'treeVersion')
   return { path, key: found.key, entry: found.entry }
 })
-route('GET', '/api/projects/:id/template', () => ({ published: false }))
 // The project chat, with a few messages from earlier today.
 const chat = new Map<string, { id: string; userId: string | null; userName: string; content: string; createdAt: string; editedAt: string | null }[]>([
   [
@@ -315,7 +316,7 @@ export async function buildOf(projectId: string, replaced: Record<string, string
 
 route('POST', '/api/projects/:id/compile', async (_req, { id }) => {
   // About as long as a small build takes.
-  await new Promise(r => setTimeout(r, 900))
+  await sleep(900)
   return build(id)
 })
 route('GET', '/api/projects/:id/builds/:build/:name', async (_req, { build: buildId, name }) => {
@@ -349,3 +350,5 @@ ai.register(route)
 review.register(route)
 history.register(route)
 admin.register(route)
+accounts.register(route)
+templates.register(route)

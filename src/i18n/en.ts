@@ -34,6 +34,7 @@ export default {
     chapters: ['Sign in', 'Workspace', 'Writing', 'Visual editor', 'Collaboration', 'AI agent', 'Review', 'References', 'History', 'Settings', 'Administration'],
     try: 'Try the demo',
     note: 'The demo runs entirely in your browser.',
+    position: 'Position in the tour',
   },
   why: {
     title: 'Why ColTex?',

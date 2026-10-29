@@ -36,6 +36,7 @@ export default {
     chapters: ['Entrar', 'Área de trabalho', 'Escrita', 'Editor visual', 'Colaboração', 'Agente de IA', 'Revisão', 'Referências', 'Histórico', 'Configurações', 'Administração'],
     try: 'Experimentar a demonstração',
     note: 'A demonstração roda inteiramente no seu navegador.',
+    position: 'Posição no tour',
   },
   why: {
     title: 'Por que o ColTex?',

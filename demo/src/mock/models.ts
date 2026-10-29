@@ -15,14 +15,25 @@ const withProvider = (p: Provider) => p.models.map(m => ({ ...m, provider: p.id 
 const DEEPSEEK = withProvider(PROVIDERS.find(p => p.id === 'deepseek')!)
 const OPENROUTER = withProvider(PROVIDERS.find(p => p.id === 'openrouter')!)
 
-/** The lab's GPU server: Ollama, OpenAI-compatible, on the LAN. */
-export const LOCAL: ModelInfo = { provider: 'custom-ollama', id: 'qwen3:8b', name: 'qwen3:8b', contextWindow: 32_768, reasoning: false, thinkingLevels: ['off'] }
+/**
+ * The lab's GPU server: Qwen3.8-27B served by vLLM (OpenAI-compatible) on the LAN, under its
+ * Hugging Face id. As ColTex shows a self-hosted model: named by its id, no context window (the
+ * server's own setting), and pi-ai's thinking levels for a model that reasons.
+ */
+export const LOCAL: ModelInfo = {
+  provider: 'custom-lab-gpu',
+  id: 'Qwen/Qwen3.8-27B',
+  name: 'Qwen/Qwen3.8-27B',
+  contextWindow: 0,
+  reasoning: true,
+  thinkingLevels: ['off', 'minimal', 'low', 'medium', 'high'],
+}
 export const CUSTOM_PROVIDERS = [
   {
-    id: 'custom-ollama',
-    name: 'Lab GPU server (Ollama)',
-    baseUrl: 'http://192.168.1.20:11434/v1',
-    models: [{ id: LOCAL.id, contextWindow: LOCAL.contextWindow, maxTokens: 8192, reasoning: false }],
+    id: 'custom-lab-gpu',
+    name: 'Lab GPU server (vLLM)',
+    baseUrl: 'http://192.168.1.20:8000/v1',
+    models: [{ id: LOCAL.id, contextWindow: 128_000, maxTokens: 16_384, reasoning: true }],
   },
 ]
 
@@ -41,6 +52,13 @@ export function clampThinking(model: ModelInfo, level: string) {
 }
 
 // The signed-in person's choice in the AI panel.
+/**
+ * The AI agent on the web: DeepSeek's search for the models without one of their own (Tavily
+ * connected too). Every model then can search, so the agent's changes wait for review.
+ */
+export const web: { search: string | null; services: string[]; nativeOff: string[] } = { search: 'deepseek', services: ['deepseek', 'tavily'], nativeOff: [] }
+export const webOn = () => web.search !== null
+
 export const preference = { model: { provider: STRONG.provider, id: STRONG.id }, thinkingLevel: 'high', auto: false }
 
 export function aiStatus() {
@@ -51,5 +69,6 @@ export function aiStatus() {
     thinkingLevel: clampThinking(model, preference.thinkingLevel),
     models: MODELS,
     auto: { available: true, on: preference.auto, light: LOCAL, strong: STRONG },
+    web: webOn(),
   }
 }

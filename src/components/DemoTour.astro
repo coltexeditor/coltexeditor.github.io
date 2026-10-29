@@ -1,7 +1,10 @@
 ---
 // The tour at the top of the page: the demo (ColTex's own web app, /demo/) playing ?tour in a
 // frame drawn at 1280×800 and scaled to fit, so it looks the same at any width. It can't be
-// clicked (the button below opens the demo itself). The chapter playing is posted by the tour.
+// clicked (the button below opens the demo itself). Under it, the tour's progress: one segment
+// per chapter, its name under it, the segments dragged or clicked to move, a name clicked to go
+// to its chapter. The tour says where it is several times a second; a move forward is played
+// through at once in the frame, a move back starts the frame again at that moment (?seek).
 import { dictionary, type Lang } from '../i18n/index.ts'
 
 const { lang } = Astro.props as { lang: Lang }
@@ -12,18 +15,41 @@ const t = dictionary(lang)
   <div class="demo-tour-frame overflow-hidden rounded-xl border border-border bg-card shadow-2xl shadow-black/15">
     <img src="/images/editor.png" alt="" class="demo-tour-poster" />
     <iframe title="ColTex" tabindex="-1" aria-hidden="true" width="1280" height="800"></iframe>
+    <div class="demo-tour-veil" aria-hidden="true"><span class="demo-tour-spinner"></span></div>
   </div>
-  <div class="mt-4 grid grid-cols-4 gap-x-3 gap-y-2 lg:grid-cols-11">
-    {
-      t.tour.chapters.map(name => (
-        <div class="demo-tour-chapter text-xs text-muted-foreground transition-colors">
-          <div class="mb-1.5 h-[3px] overflow-hidden rounded-full bg-border">
-            <div class="demo-tour-bar h-full w-0 bg-primary" />
-          </div>
-          <span class="block truncate">{name}</span>
-        </div>
-      ))
-    }
+  <div class="mt-4">
+    <div
+      class="demo-tour-track relative cursor-pointer touch-none select-none"
+      role="slider"
+      tabindex="0"
+      aria-label={t.tour.position}
+      aria-valuemin="0"
+      aria-valuemax="0"
+      aria-valuenow="0"
+    >
+      <div class="demo-tour-columns">
+        {
+          t.tour.chapters.map(() => (
+            <div class="demo-tour-segment">
+              <div class="demo-tour-rail">
+                <div class="demo-tour-fill" />
+              </div>
+            </div>
+          ))
+        }
+      </div>
+      <div class="demo-tour-thumb" aria-hidden="true"></div>
+    </div>
+    <div class="demo-tour-columns mt-1.5 max-sm:hidden">
+      {
+        t.tour.chapters.map(name => (
+          <button type="button" class="demo-tour-chapter" tabindex="-1">
+            {name}
+          </button>
+        ))
+      }
+    </div>
+    <div class="demo-tour-now mt-1.5 text-xs font-medium sm:hidden"></div>
   </div>
   <div class="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-2">
     <a href={`/demo/?lang=${lang}`} data-demo-link target="_blank" rel="noopener" class="inline-flex h-10 items-center gap-2 rounded-lg border border-border bg-card px-4 text-sm font-medium shadow-sm transition-colors hover:bg-muted">
@@ -40,7 +66,8 @@ const t = dictionary(lang)
     aspect-ratio: 1280 / 800;
   }
   .demo-tour-poster,
-  .demo-tour-frame iframe {
+  .demo-tour-frame iframe,
+  .demo-tour-veil {
     position: absolute;
     top: 0;
     left: 0;
@@ -65,26 +92,128 @@ const t = dictionary(lang)
   .demo-tour.playing .demo-tour-poster {
     opacity: 0;
   }
+  /* While the tour plays up to a moment at once: the frame dimmed, a spinner over it. */
+  .demo-tour-veil {
+    inset: 0;
+    display: grid;
+    place-items: center;
+    background: color-mix(in oklab, var(--background) 55%, transparent);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+  .demo-tour.seeking .demo-tour-veil {
+    opacity: 1;
+  }
+  .demo-tour-spinner {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    border: 3px solid color-mix(in oklab, var(--primary) 25%, transparent);
+    border-top-color: var(--primary);
+    animation: demo-tour-spin 0.8s linear infinite;
+  }
+  @keyframes demo-tour-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* The segments and the names share one grid, so each name is under its segment. */
+  .demo-tour-columns {
+    display: grid;
+    grid-template-columns: repeat(11, minmax(0, 1fr));
+    column-gap: 6px;
+  }
+  .demo-tour-segment {
+    display: flex;
+    align-items: center;
+    height: 14px;
+  }
+  .demo-tour-rail {
+    position: relative;
+    width: 100%;
+    height: 4px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: var(--border);
+    transition: height 0.15s ease;
+  }
+  .demo-tour-track:hover .demo-tour-rail,
+  .demo-tour-track.dragging .demo-tour-rail {
+    height: 6px;
+  }
+  .demo-tour-fill {
+    position: absolute;
+    inset: 0 auto 0 0;
+    width: 0;
+    background: var(--primary);
+  }
+  .demo-tour-thumb {
+    position: absolute;
+    top: 50%;
+    left: 0;
+    width: 12px;
+    height: 12px;
+    margin: -6px 0 0 -6px;
+    border-radius: 999px;
+    background: var(--primary);
+    box-shadow:
+      0 0 0 2px var(--background),
+      0 1px 3px rgb(0 0 0 / 0.25);
+    opacity: 0;
+    transform: scale(0.6);
+    transition:
+      opacity 0.15s ease,
+      transform 0.15s ease;
+    pointer-events: none;
+  }
+  .demo-tour.playing .demo-tour-track:hover .demo-tour-thumb,
+  .demo-tour.playing .demo-tour-track:focus-visible .demo-tour-thumb,
+  .demo-tour-track.dragging .demo-tour-thumb {
+    opacity: 1;
+    transform: none;
+  }
+  .demo-tour-track:focus-visible {
+    outline: 2px solid var(--primary);
+    outline-offset: 4px;
+    border-radius: 4px;
+  }
+  .demo-tour-chapter {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    text-align: left;
+    font-size: 12px;
+    line-height: 1.4;
+    color: var(--muted-foreground);
+    cursor: pointer;
+    transition: color 0.15s ease;
+  }
+  .demo-tour-chapter:hover,
   .demo-tour-chapter.on {
     color: var(--foreground);
   }
-  .demo-tour-chapter.done .demo-tour-bar {
-    width: 100%;
-  }
-  .demo-tour-chapter.on .demo-tour-bar {
-    width: 100%;
-    transition: width var(--chapter-ms, 8s) linear;
+  .demo-tour-chapter.on {
+    font-weight: 500;
   }
 </style>
 
 <script>
-  // Rough lengths of the tour's chapters, for their bars (the tour itself says when each starts).
-  const CHAPTER_MS = [5000, 3000, 9000, 6000, 12000, 18000, 10000, 10000, 6000, 18000, 27000]
+  type Timeline = { starts: number[]; end: number }
+  type Report = Timeline & { at: number; until: number; chapter: number; seeking: boolean }
 
   for (const root of document.querySelectorAll<HTMLElement>('.demo-tour')) {
     const frame = root.querySelector<HTMLElement>('.demo-tour-frame')!
     const iframe = root.querySelector('iframe')!
-    const chapters = [...root.querySelectorAll<HTMLElement>('.demo-tour-chapter')]
+    const track = root.querySelector<HTMLElement>('.demo-tour-track')!
+    const segments = [...root.querySelectorAll<HTMLElement>('.demo-tour-segment')]
+    const fills = [...root.querySelectorAll<HTMLElement>('.demo-tour-fill')]
+    const thumb = root.querySelector<HTMLElement>('.demo-tour-thumb')!
+    const chapters = [...root.querySelectorAll<HTMLButtonElement>('.demo-tour-chapter')]
+    const current = root.querySelector<HTMLElement>('.demo-tour-now')!
+    const names = chapters.map(c => c.textContent!.trim())
     const fit = () => (iframe.style.transform = `scale(${frame.clientWidth / 1280})`)
     new ResizeObserver(fit).observe(frame)
     fit()
@@ -95,41 +224,155 @@ const t = dictionary(lang)
       const a = e.currentTarget as HTMLAnchorElement
       a.href = `/demo/?lang=${root.dataset.lang}&theme=${theme()}`
     })
-    const start = () => {
-      root.classList.remove('playing')
-      chapters.forEach(c => c.classList.remove('on', 'done'))
-      iframe.src = `/demo/?tour&lang=${root.dataset.lang}&theme=${theme()}`
+
+    let timeline: Timeline | null = null
+    /** The tour's last report, and when it came. */
+    let last: (Report & { when: number }) | null = null
+    /** While dragging, or until the tour has caught up with a move: the moment asked for. */
+    let wanted: number | null = null
+    let dragging = false
+    /** The moment drawn last: the bar never moves back unless the tour does (a move, a new round). */
+    let shown = 0
+
+    /**
+     * Where the tour is now: its last report moved on by the time since, but only to the end of
+     * the pause it was in (while it waits for the interface its clock stands).
+     */
+    const estimate = () => {
+      if (!last) return 0
+      if (last.seeking) return last.at
+      return Math.min(last.until, last.at + (performance.now() - last.when))
     }
+    const span = (i: number) => [timeline!.starts[i]!, timeline!.starts[i + 1] ?? timeline!.end] as const
+    const chapterAt = (ms: number) => {
+      let i = 0
+      while (timeline && i + 1 < timeline.starts.length && timeline.starts[i + 1]! <= ms) i++
+      return i
+    }
+    /** How far into its chapter a moment is (0 to 1). */
+    const within = (ms: number, i: number) => {
+      const [from, to] = span(i)
+      return to > from ? Math.min(1, Math.max(0, (ms - from) / (to - from))) : 0
+    }
+    /** The moment under a pointer's x: its segment (or the nearest), and the share of it. */
+    const momentAt = (x: number) => {
+      let best = 0
+      for (const [i, s] of segments.entries()) {
+        const r = s.getBoundingClientRect()
+        if (x >= r.left - 3) best = i
+      }
+      const r = segments[best]!.getBoundingClientRect()
+      const [from, to] = span(best)
+      return Math.round(from + Math.min(1, Math.max(0, (x - r.left) / r.width)) * (to - from))
+    }
+
+    const draw = () => {
+      if (timeline) {
+        const ms = wanted ?? (shown = Math.max(shown, estimate()))
+        const at = chapterAt(ms)
+        fills.forEach((f, i) => (f.style.width = `${i < at ? 100 : i > at ? 0 : within(ms, i) * 100}%`))
+        const seg = segments[at]!.getBoundingClientRect()
+        thumb.style.left = `${seg.left - track.getBoundingClientRect().left + within(ms, at) * seg.width}px`
+        chapters.forEach((c, i) => c.classList.toggle('on', i === at))
+        if (current.textContent !== names[at]) current.textContent = names[at] ?? ''
+        track.setAttribute('aria-valuenow', String(Math.round(ms / 1000)))
+        track.setAttribute('aria-valuetext', names[at] ?? '')
+      }
+      requestAnimationFrame(draw)
+    }
+    requestAnimationFrame(draw)
+
+    const start = (at = 0) => {
+      root.classList.toggle('seeking', at > 0)
+      last = null
+      shown = at
+      iframe.src = `/demo/?tour&lang=${root.dataset.lang}&theme=${theme()}${at > 0 ? `&seek=${Math.round(at)}` : ''}`
+    }
+    /** To a moment: forward is played through in place, back starts the tour again there. */
+    const seek = (ms: number) => {
+      if (!timeline || !last) {
+        start(ms)
+        return
+      }
+      ms = Math.max(0, Math.min(timeline.end - 500, ms))
+      const ahead = ms >= Math.max(shown, estimate()) - 50
+      wanted = ms
+      shown = ms
+      root.classList.add('seeking')
+      if (ahead) iframe.contentWindow?.postMessage({ coltexSeek: ms }, location.origin)
+      else start(ms)
+    }
+
     addEventListener('message', e => {
-      if (e.origin !== location.origin || e.source !== iframe.contentWindow || typeof e.data?.coltexTour !== 'number') return
-      const at = e.data.coltexTour as number
+      if (e.origin !== location.origin || e.source !== iframe.contentWindow) return
+      const report = e.data?.coltexTour as Report | undefined
+      if (!report || typeof report.at !== 'number') return
+      if (!timeline || timeline.end !== report.end) {
+        timeline = { starts: report.starts, end: report.end }
+        track.setAttribute('aria-valuemax', String(Math.round(timeline.end / 1000)))
+      }
+      // A new round of the tour starts from the beginning.
+      if (!report.seeking && wanted === null && report.at + 3000 < shown) shown = report.at
       root.classList.add('playing')
-      chapters.forEach((c, i) => {
-        c.classList.toggle('done', i < at)
-        c.classList.remove('on')
-        if (i === at) {
-          c.style.setProperty('--chapter-ms', `${CHAPTER_MS[i] ?? 8000}ms`)
-          void c.offsetWidth
-          c.classList.add('on')
-        }
-      })
+      last = { ...report, when: performance.now() }
+      root.classList.toggle('seeking', report.seeking)
+      if (!report.seeking && !dragging) wanted = null
     })
-    // Following the page's light or dark theme.
-    let shown = theme()
+
+    // Dragging or clicking the segments.
+    track.addEventListener('pointerdown', e => {
+      if (!timeline) {
+        if (!iframe.src) start()
+        return
+      }
+      dragging = true
+      track.classList.add('dragging')
+      track.setPointerCapture(e.pointerId)
+      wanted = momentAt(e.clientX)
+    })
+    track.addEventListener('pointermove', e => {
+      if (dragging) wanted = momentAt(e.clientX)
+    })
+    track.addEventListener('pointerup', e => {
+      if (!dragging) return
+      dragging = false
+      track.classList.remove('dragging')
+      seek(momentAt(e.clientX))
+    })
+    track.addEventListener('pointercancel', () => {
+      dragging = false
+      track.classList.remove('dragging')
+      wanted = null
+    })
+    track.addEventListener('keydown', e => {
+      if (!timeline) return
+      const from = wanted ?? shown
+      const step = { ArrowLeft: -5000, ArrowDown: -5000, ArrowRight: 5000, ArrowUp: 5000 }[e.key]
+      if (step) seek(from + step)
+      else if (e.key === 'Home') seek(0)
+      else if (e.key === 'End') seek(timeline.starts.at(-1)!)
+      else return
+      e.preventDefault()
+    })
+    // A chapter's name: to its start.
+    chapters.forEach((c, i) => c.addEventListener('click', () => seek(timeline ? timeline.starts[i]! : 0)))
+
+    // Following the page's light or dark theme, from where it was.
+    let themeShown = theme()
     new MutationObserver(() => {
-      if (theme() !== shown && iframe.src) {
-        shown = theme()
-        start()
+      if (theme() !== themeShown && iframe.src) {
+        themeShown = theme()
+        start(wanted ?? shown)
       }
     }).observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
 
-    // Less motion asked for: the picture stays; the demo is a click away.
+    // Less motion asked for: the picture stays until the bar or a chapter is used.
     if (matchMedia('(prefers-reduced-motion: reduce)').matches) continue
     new IntersectionObserver(
       (entries, observer) => {
         if (!entries.some(e => e.isIntersecting)) return
         observer.disconnect()
-        start()
+        if (!iframe.src) start()
       },
       { rootMargin: '200px' },
     ).observe(root)

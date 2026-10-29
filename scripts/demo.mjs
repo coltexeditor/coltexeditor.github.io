@@ -35,6 +35,22 @@ into('demo/src', path.join(WEB, 'src/demo'))
 into('demo/project', path.join(WEB, 'src/demo/project'))
 into('demo/compiled', path.join(WEB, 'src/demo/compiled'))
 fs.copyFileSync('demo/vite.config.ts', path.join(WEB, 'vite.demo.config.ts'))
+
+// The built-in templates as the server lists them (TemplateService.list): name, description,
+// field, order and the conversion target that writes into it.
+const shared = fs.readFileSync(path.join(CHECKOUT, 'packages/shared/src/index.ts'), 'utf8')
+const targets = [...(/ConvertTargetId = z\.enum\(\[([^\]]*)\]/.exec(shared)?.[1] ?? '').matchAll(/'([^']+)'/g)].map(m => m[1])
+const templatesDir = path.join(CHECKOUT, 'apps/server/templates')
+const builtins = fs
+  .readdirSync(templatesDir)
+  .filter(id => fs.existsSync(path.join(templatesDir, id, 'template.json')))
+  .map(id => {
+    const meta = JSON.parse(fs.readFileSync(path.join(templatesDir, id, 'template.json'), 'utf8'))
+    const target = meta.target ?? id
+    return { id, name: meta.name ?? id, description: meta.description ?? '', field: meta.field ?? null, order: Number(meta.order ?? 100), target: targets.includes(target) ? target : null }
+  })
+  .sort((a, b) => a.order - b.order || a.id.localeCompare(b.id))
+fs.writeFileSync(path.join(WEB, 'src/demo/templates.json'), JSON.stringify(builtins))
 fs.copyFileSync('demo/index.html', path.join(WEB, 'index.html'))
 
 run('node', ['scripts/dictionaries.ts'], WEB)

@@ -6,7 +6,9 @@ import { DEMO_PROJECT, docFor, textOf } from './store.ts'
 import { onOpen, publish } from './streams.ts'
 import { HttpError, build, buildOf, type Req } from './http.ts'
 import { replaceText } from './text.ts'
-import { aiStatus, clampThinking, findModel, preference, STRONG, LOCAL } from './models.ts'
+import { t } from '../../lib/i18n.ts'
+import { aiStatus, clampThinking, findModel, preference, STRONG, LOCAL, webOn } from './models.ts'
+import { sleep } from './time.ts'
 
 type Route = (method: string, path: string, handler: (req: Req, params: Record<string, string>) => unknown) => void
 
@@ -66,7 +68,6 @@ const sessionOf = (projectId: string) => {
 }
 const eventsPath = (projectId: string) => `/api/projects/${projectId}/ai/session/events`
 const send = (projectId: string, event: unknown) => publish(eventsPath(projectId), event)
-const sleep = (ms: number) => new Promise(r => setTimeout(r, ms))
 let counter = 0
 const nextId = (prefix: string) => `${prefix}-${++counter}`
 
@@ -108,7 +109,8 @@ async function turn(projectId: string, text: string) {
   const now = projectId === DEMO_PROJECT ? textOf(projectId, 'main.tex') : undefined
   const typo = now?.indexOf('\\textbd') ?? -1
   const broken = typo >= 0
-  const asksToFix = /fix|error|修|错|錯/i.test(text)
+  // In any language: the panel's own suggestion, or words that ask for it.
+  const asksToFix = /fix|error|修|错|錯/i.test(text) || text.trim() === t('Fix the compile errors.')
   await sleep(400)
   if (broken && asksToFix) {
     await step('read_log', 'Read compile log', 550)
@@ -129,7 +131,7 @@ async function turn(projectId: string, text: string) {
     s.items.push(card)
     send(projectId, { type: 'item', item: card })
     // Auto and Full access: applied when the turn ends, and the build goes to the PDF viewer.
-    if (permission !== 'manual') {
+    if (permission !== 'manual' && !webOn()) {
       const result = await applyDraft(projectId, s.changes.files.map(f => ({ path: f.path, content: f.proposed })))
       send(projectId, { type: 'built', compile: result.compile })
     }
