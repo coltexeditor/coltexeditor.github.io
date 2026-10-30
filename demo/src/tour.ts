@@ -29,8 +29,10 @@ let wake: (() => void) | null = null
 let target = Number(new URLSearchParams(location.search).get('seek') ?? 0) || 0
 const seeking = () => clock < target
 const now = () => clock + (pause ? Math.min(pause.ms, performance.now() - pause.since) : 0)
-// The made-up server answers at once while the tour plays through.
+// The made-up server answers at once while the tour plays through, and pages that were loading
+// are shown at once (demo/vite.config.ts).
 fastWhile(seeking)
+Object.defineProperty(globalThis, '__coltexFallbackThrottle', { get: () => (seeking() ? 0 : 300) })
 
 /**
  * Lets the page do what it has queued (React renders from a MessageChannel task too, so it comes
@@ -105,8 +107,8 @@ async function waitFor<T>(find: () => T | null | undefined | false, timeout = 10
     const found = find()
     if (found) return found
     if (Date.now() > until) throw new Error('not found in time')
-    // Real time: waiting for the interface isn't tour time.
-    await new Promise(r => setTimeout(r, 60))
+    // Real time: waiting for the interface isn't tour time. Looked at often while playing through.
+    await new Promise(r => setTimeout(r, seeking() ? 4 : 60))
   }
 }
 const text = (el: Element) => (el.textContent ?? '').replace(/\s+/g, ' ').trim()
@@ -195,15 +197,40 @@ async function choose(option: HTMLElement) {
   await sleep(180)
 }
 
+/**
+ * Types `pieces` one after another, waiting `delays[i]` after each; `put(i)` shows the first i.
+ * While playing through, all that ends before the moment asked for is put at once.
+ */
+async function typePieces(count: number, delays: (i: number) => number, put: (i: number) => void) {
+  let i = 0
+  while (i < count) {
+    let end = clock
+    let j = i
+    while (j < count && end + delays(j) <= target) end += delays(j++)
+    if (j > i) {
+      put(j)
+      clock = end
+      await yieldToPage()
+      i = j
+      continue
+    }
+    put(++i)
+    await sleep(delays(i - 1))
+  }
+}
+
 /** Types into an input or textarea the way React notices (its value setter, then an input event). */
 async function typeInto(el: HTMLInputElement | HTMLTextAreaElement, value: string, ms = 55) {
   el.focus()
   const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(el), 'value')!.set!
-  for (let i = 1; i <= value.length; i++) {
-    setter.call(el, value.slice(0, i))
-    el.dispatchEvent(new Event('input', { bubbles: true }))
-    await sleep(ms + ((i * 17) % 35))
-  }
+  await typePieces(
+    value.length,
+    i => ms + (((i + 1) * 17) % 35),
+    n => {
+      setter.call(el, value.slice(0, n))
+      el.dispatchEvent(new Event('input', { bubbles: true }))
+    },
+  )
 }
 /**
  * Types text in the interface's language in `total` ms whatever its length, so the tour takes
@@ -213,11 +240,14 @@ async function typeTranslated(el: HTMLInputElement | HTMLTextAreaElement, value:
   el.focus()
   const setter = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(el), 'value')!.set!
   const chars = [...value]
-  for (let i = 1; i <= chars.length; i++) {
-    setter.call(el, chars.slice(0, i).join(''))
-    el.dispatchEvent(new Event('input', { bubbles: true }))
-    await sleep(Math.floor((total * i) / chars.length) - Math.floor((total * (i - 1)) / chars.length))
-  }
+  await typePieces(
+    chars.length,
+    i => Math.floor((total * (i + 1)) / chars.length) - Math.floor((total * i) / chars.length),
+    n => {
+      setter.call(el, chars.slice(0, n).join(''))
+      el.dispatchEvent(new Event('input', { bubbles: true }))
+    },
+  )
 }
 const key = (el: Element, name: string) => el.dispatchEvent(new KeyboardEvent('keydown', { key: name, bubbles: true, cancelable: true }))
 
@@ -236,13 +266,22 @@ function scrollEditorTo(view: EditorView, pos: number) {
  */
 async function typeCode(view: EditorView, pos: number, value: string, ms = 45) {
   view.focus()
-  for (const piece of value.match(/\n|[^\n]{1,3}/g) ?? []) {
-    view.dispatch({ changes: { from: pos, insert: piece }, selection: { anchor: pos + piece.length }, userEvent: 'input.type', scrollIntoView: true })
-    pos += piece.length
-    await sleep(piece === '\n' ? 160 : ms + ((pos * 7) % 25))
-  }
+  const pieces = value.match(/\n|[^\n]{1,3}/g) ?? []
+  const ends: number[] = []
+  for (const [i, piece] of pieces.entries()) ends.push((ends[i - 1] ?? pos) + piece.length)
+  let done = 0
+  await typePieces(
+    pieces.length,
+    i => (pieces[i] === '\n' ? 160 : ms + ((ends[i]! * 7) % 25)),
+    n => {
+      const insert = pieces.slice(done, n).join('')
+      const from = done ? ends[done - 1]! : pos
+      view.dispatch({ changes: { from, insert }, selection: { anchor: ends[n - 1]! }, userEvent: 'input.type', scrollIntoView: true })
+      done = n
+    },
+  )
   closeCompletion(view)
-  return pos
+  return ends.at(-1) ?? pos
 }
 
 async function pointAtText(view: EditorView, pos: number) {
@@ -467,7 +506,7 @@ async function history() {
 }
 
 /** Scrolls the page's main column (console pages scroll inside it) by `dy`, smoothly. */
-async function scrollPage(dy: number, ms = 900) {
+async function scrollPage(dy: number, ms = 600) {
   const candidates = [...document.querySelectorAll<HTMLElement>('main, main *')].filter(el => el.scrollHeight > el.clientHeight + 40 && /(auto|scroll)/.test(getComputedStyle(el).overflowY))
   const target = candidates[0] ?? (document.scrollingElement as HTMLElement)
   target.scrollBy({ top: dy, behavior: 'smooth' })
@@ -496,33 +535,33 @@ async function personalSettings() {
     const list = [...document.querySelectorAll<HTMLElement>('[aria-labelledby="settings-avatar-colour"] [role=radio]')]
     return list.length > 4 && list
   })
-  await sleep(900)
+  await sleep(500)
   await press(swatches[5]!)
-  await sleep(1300)
+  await sleep(700)
   // Appearance: the themes, applied at once.
-  await page('Appearance', 700)
+  await page('Appearance', 400)
   await press(await waitFor(() => find('button', t('Forest'))))
-  await sleep(1300)
+  await sleep(800)
   await press(await waitFor(() => find('button', t('Light'))))
-  await sleep(600)
-  await page('Sync services', 2600)
-  await page('Groups', 2600)
-  await page('AI agent', 4200, 600)
-  await page('AI skills', 1400)
+  await sleep(400)
+  await page('Sync services', 1100)
+  await page('Groups', 1100)
+  await page('AI agent', 1800, 600)
+  await page('AI skills', 700)
   // Waited for: the list may still be loading when the tour plays through at once.
   await press(await waitFor(() => [...document.querySelectorAll<HTMLElement>('button, a')].find(el => visible(el) && /ieee|figure|rebuttal/i.test(text(el)))))
-  await sleep(2200)
+  await sleep(1300)
 }
 
 async function administration() {
-  await page('Overview', 4200, 500)
-  await page('Manage users', 3200)
-  await page('Sign-ins', 2800)
-  await page('Invitations', 2600)
-  await page('AI services', 3400, 400)
-  await page('AI usage & access', 3600, 400)
-  await page('Storage & backups', 3200)
-  await page('Network', 3200)
+  await page('Overview', 1800, 500)
+  await page('Manage users', 1200)
+  await page('Sign-ins', 1100)
+  await page('Invitations', 1000)
+  await page('AI services', 1600, 400)
+  await page('AI usage & access', 1600, 400)
+  await page('Storage & backups', 1100)
+  await page('Network', 1100)
 }
 
 const STEPS = [signIn, workspace, writing, visual, collaboration, ai, review, references, history, personalSettings, administration]
@@ -531,7 +570,7 @@ const STEPS = [signIn, workspace, writing, visual, collaboration, ai, review, re
  * Where each chapter starts and when the tour ends, in tour time (the hosting page draws its
  * bar from them). Measured with ?timeline; the tour warns when a chapter starts elsewhere.
  */
-export const TIMELINE = { starts: [0, 4736, 17018, 34360, 39380, 49976, 65770, 77902, 89832, 96062, 124482], end: 162362 }
+export const TIMELINE = { starts: [0, 4736, 17018, 34360, 39380, 49976, 65770, 77902, 89832, 96062, 115182], end: 136462 }
 
 let chapter = 0
 /**
@@ -545,8 +584,33 @@ function report() {
   parent.postMessage({ coltexTour: { at: now(), until, chapter, seeking: seeking(), ...TIMELINE } }, location.origin)
 }
 
+/**
+ * The code of every page the tour shows, loaded at its start: each is otherwise loaded when it is
+ * first shown, and playing through to a later moment waited for them one by one. Other
+ * languages' texts are left out.
+ */
+async function preload() {
+  const base = import.meta.env.BASE_URL
+  try {
+    const chunks = (await (await fetch(`${base}tour-chunks.json`)).json()) as Record<string, { file: string; src?: string }>
+    for (const { file, src } of Object.values(chunks)) {
+      if (/\/(locales|place-names)\//.test(src ?? '')) continue
+      if (file.endsWith('.js')) {
+        const link = document.createElement('link')
+        link.rel = 'modulepreload'
+        link.href = base + file
+        document.head.append(link)
+      } else if (file.endsWith('.mjs')) {
+        // The PDF viewer's worker: into the HTTP cache.
+        void fetch(base + file).catch(() => {})
+      }
+    }
+  } catch {}
+}
+
 async function play() {
   document.body.append(ripple, pointer)
+  void preload()
   try {
     localStorage.removeItem('coltex:theme')
   } catch {}

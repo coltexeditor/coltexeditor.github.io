@@ -10,8 +10,7 @@ const t = dictionary(lang)
 ---
 
 <!-- The command first: most people come to install it. -->
-<section class="relative overflow-hidden">
-  <div class="hero-grid pointer-events-none absolute inset-0 -z-10"></div>
+<section>
   <div class="mx-auto flex max-w-6xl flex-col items-center px-4 pt-14 pb-16 text-center sm:px-6 sm:pt-20">
     <a
       href={`https://github.com/${repo}/releases/tag/${version}`}
@@ -161,14 +160,6 @@ const t = dictionary(lang)
 </script>
 
 <style>
-  /* A faint grid behind the top of the page, fading out downwards. */
-  .hero-grid {
-    background-image:
-      linear-gradient(to right, var(--border) 1px, transparent 1px),
-      linear-gradient(to bottom, var(--border) 1px, transparent 1px);
-    background-size: 48px 48px;
-    mask-image: radial-gradient(ellipse 70% 55% at 50% 0%, #000 30%, transparent 75%);
-  }
   .faq-tab[aria-selected='true'] {
     border-color: var(--primary);
     background: var(--primary);

@@ -9,10 +9,13 @@ const BASE = '/demo/'
 const real = path.resolve(import.meta.dirname, 'src/lib/collab.ts')
 const replacement = path.resolve(import.meta.dirname, 'src/demo/collab.ts')
 
-// Absolute paths in the app that don't go through Vite's base, and the side panel a little wider
-// (the tour plays at 1280 px, where the AI panel's picker rows are tight at 320).
+// Absolute paths in the app that don't go through Vite's base; and React's 300 ms before a page
+// that was loading is shown, which the tour turns off while it plays through to a moment (each
+// page it passes waited that long).
+const THROTTLE = '(globalThis.__coltexFallbackThrottle ?? 300)'
 const MOVED: [RegExp, string, string][] = [
-  [/src\/components\/EditorPage\.tsx$/, 'defaultSize={320} minSize={240}', 'defaultSize={380} minSize={240}'],
+  [/react-dom-client\.production\.js$/, 'globalMostRecentFallbackTime + 300 - now()', `globalMostRecentFallbackTime + ${THROTTLE} - now()`],
+  [/react-dom-client\.production\.js$/, '300 > now() - globalMostRecentFallbackTime', `${THROTTLE} > now() - globalMostRecentFallbackTime`],
   [/src\/components\/PdfViewer\.tsx$|src\/lib\/pdf-figures\.ts$/, "'/pdfjs/", `'${BASE}pdfjs/`],
   [/src\/spelling\/hunspell\/HunspellManager\.ts$/, "'/dictionaries/'", `'${BASE}dictionaries/'`],
   [/src\/components\/shell\/app-shell\.tsx$/, "window.location.assign('/')", `window.location.assign('${BASE}')`],
@@ -28,14 +31,18 @@ function demo(): Plugin {
       return resolved?.id === real ? replacement : null
     },
     transform(code, id) {
+      let changed = false
       for (const [file, from, to] of MOVED) {
         if (!file.test(id)) continue
         if (!code.includes(from)) throw new Error(`demo: ${from} not found in ${id}`)
-        return code.replaceAll(from, to)
+        code = code.replaceAll(from, to)
+        changed = true
       }
-      return null
+      return changed ? code : null
     },
   }
 }
 
-export default mergeConfig(app, { base: BASE, build: { outDir: 'dist-demo', emptyOutDir: true }, plugins: [demo()] })
+// tour-chunks.json lists the build's files, so the tour can load the code of every page it
+// visits at its start (demo/src/tour.ts).
+export default mergeConfig(app, { base: BASE, build: { outDir: 'dist-demo', emptyOutDir: true, manifest: 'tour-chunks.json' }, plugins: [demo()] })
